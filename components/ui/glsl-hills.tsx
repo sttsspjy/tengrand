@@ -23,6 +23,7 @@ export function GLSLHills({
     if (!canvas) return;
 
     interface Uniforms {
+      [uniform: string]: THREE.IUniform;
       time: { type: string; value: number };
     }
 
