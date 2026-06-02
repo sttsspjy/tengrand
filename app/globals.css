@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Volstead';
+  src: url('/fonts/Volstead.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Inter:wght@300;400;500&family=Space+Mono&family=Syne:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Bodoni+Moda:ital,opsz,wght@0,6..96,300;0,6..96,400;1,6..96,300;1,6..96,400&family=Syncopate:wght@400;700&display=swap');
+
+:root {
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'Space Mono', monospace;
+  --font-syne: 'Syne', sans-serif;
+  --font-syncopate: 'Syncopate', sans-serif;
+  --font-volstead: 'Volstead', serif;
+  --font-fraunces: 'Fraunces', serif;
+  --font-bodoni: 'Bodoni Moda', serif;
+
+  --accent-blue:   #4A7CFF;
+  --accent-violet: #8B5CF6;
+  --border:        rgba(255,255,255,0.06);
+  --border-hi:     rgba(255,255,255,0.11);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  background: #050508;
+  color: #F0EEE8;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Desktop custom cursor */
+@media (pointer: fine) {
+  body { cursor: none; }
+}
+
+/* Reduced motion: kill all animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 10000;
+  background: var(--accent-blue);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 3px;
+  font-size: 0.875rem;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+}
+.skip-link:focus { top: 1rem; }
+
+/* Scroll-pulse animation for hero indicator */
+@keyframes scroll-pulse {
+  0%, 100% { opacity: 0.25; transform: scaleY(1); }
+  50%       { opacity: 0.9;  transform: scaleY(0.55); }
+}
+.scroll-line {
+  width: 1px;
+  height: 56px;
+  background: linear-gradient(to bottom, var(--accent-blue), transparent);
+  animation: scroll-pulse 2.2s ease-in-out infinite;
+}
