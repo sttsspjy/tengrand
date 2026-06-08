@@ -1,8 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { FloatingPaths } from "@/components/ui/background-paths";
 import { LampContainer } from "@/components/ui/lamp";
 import { WebGLShader } from "@/components/ui/web-gl-shader";
@@ -10,8 +9,6 @@ import { Boxes } from "@/components/ui/background-boxes";
 import { ShaderScene } from "@/components/ui/background-paper-shaders";
 import { GLSLHills } from "@/components/ui/glsl-hills";
 
-/* Spline loads a heavy 3-D runtime — skip SSR */
-const Spline = dynamic(() => import("@splinetool/react-spline"), { ssr: false });
 
 /* ─── design constants ─── */
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -214,17 +211,7 @@ function Hero() {
         className="relative z-10 flex items-end justify-between mt-14"
         aria-hidden="true"
       >
-        <motion.div
-          className="font-[family-name:var(--font-mono)] text-[0.6rem]
-            text-[rgba(240,238,232,0.3)] uppercase tracking-[0.2em]
-            flex flex-col items-center gap-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.05, duration: 0.7 }}
-        >
-          <span>Scroll</span>
-          <div className="scroll-line" />
-        </motion.div>
+        <div />
         <motion.div
           className="font-[family-name:var(--font-mono)] text-[0.6rem]
             text-[rgba(240,238,232,0.3)] tracking-[0.12em] text-right leading-[1.9]"
@@ -255,9 +242,9 @@ function Reveal({
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 36 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.75, ease: EASE, delay }}
+      initial={{ opacity: 0 }}
+      animate={inView ? { opacity: 1 } : {}}
+      transition={{ duration: 0.4, ease: EASE, delay }}
       className={className}
     >
       {children}
@@ -265,10 +252,93 @@ function Reveal({
   );
 }
 
+/* ─── Scroll-driven section wrapper ─── */
+function ScrollSection({
+  children,
+  id,
+}: {
+  children: React.ReactNode;
+  id?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+
+  // 0 = top at viewport bottom (entering)
+  // ~0.5 = centered in viewport
+  // 1 = bottom at viewport top (leaving)
+  const opacity = useTransform(scrollYProgress, [0.05, 0.45, 0.55, 0.95], [0, 1, 1, 0]);
+  const y = useTransform(scrollYProgress, [0.05, 0.45, 0.55, 0.95], [120, 0, 0, -120]);
+
+  return (
+    <div ref={ref} id={id}>
+      <motion.div style={{ opacity, y, transition: "none" }}>
+        {children}
+      </motion.div>
+    </div>
+  );
+}
+
+/* ─── Starry Night reveal word ─── */
+function RevealWord({ children }: { children: string }) {
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const REVEAL_RADIUS = 160;
+
+    const handleMove = (e: MouseEvent) => {
+      const r = el.getBoundingClientRect();
+      const relX = e.clientX - r.left;
+      const relY = e.clientY - r.top;
+      const pctX = (relX / r.width) * 100;
+      const pctY = (relY / r.height) * 100;
+
+      const closestX = Math.max(0, Math.min(relX, r.width));
+      const closestY = Math.max(0, Math.min(relY, r.height));
+      const distToEdge = Math.sqrt(
+        (relX - closestX) ** 2 + (relY - closestY) ** 2
+      );
+
+      if (distToEdge < REVEAL_RADIUS) {
+        el.style.setProperty("--reveal-x", `${pctX}%`);
+        el.style.setProperty("--reveal-y", `${pctY}%`);
+        el.style.setProperty("--reveal-r", `${REVEAL_RADIUS}px`);
+        el.classList.add("is-revealing");
+      } else {
+        el.classList.remove("is-revealing");
+      }
+    };
+
+    const handleLeave = () => {
+      el.classList.remove("is-revealing");
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseleave", handleLeave);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseleave", handleLeave);
+    };
+  }, []);
+
+  return (
+    <span className="reveal-word-wrap">
+      <em ref={ref} className="not-italic reveal-word">
+        {children}
+      </em>
+    </span>
+  );
+}
+
 /* ─── About ─── */
 function About() {
   return (
-    <section id="about" aria-labelledby="about-title">
+    <section aria-labelledby="about-title">
       {/* ── Lamp header ── */}
       <LampContainer>
         <div className="text-center px-4">
@@ -279,47 +349,36 @@ function About() {
           >
             002 &nbsp;/&nbsp; About
           </p>
-          <motion.h2
+          <h2
             id="about-title"
-            initial={{ opacity: 0.5, y: 60 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.8, ease: "easeInOut" }}
             className="font-[family-name:var(--font-bodoni)] font-light
               text-[clamp(3.5rem,8vw,7rem)] leading-[1.0] tracking-[-0.025em]
               text-[#F0EEE8]"
           >
             The Story
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.7, ease: "easeInOut" }}
+          </h2>
+          <p
             className="font-[family-name:var(--font-bodoni)] font-light italic
               text-[clamp(1rem,2vw,1.4rem)] text-[rgba(240,238,232,0.45)]
               mt-4 tracking-[0.02em]"
           >
             I build things strike my mind.
-          </motion.p>
+          </p>
         </div>
       </LampContainer>
 
-      {/* ── Body content — Spline 3-D background ── */}
+      {/* ── Body content ── */}
       <div className="relative bg-[#050508] overflow-hidden">
         {/* Bottom section fade */}
         <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none z-20 bg-gradient-to-b from-transparent to-[#050508]" aria-hidden="true" />
-        {/* 3-D boxes — needs explicit w/h so the canvas fills the container */}
-        <div className="absolute inset-0" aria-hidden="true">
-          <Spline
-            scene="https://prod.spline.design/dJqTIQ-tE3ULUPMi/scene.splinecode"
-            style={{ width: "100%", height: "100%" }}
-          />
-        </div>
-        {/* Darken overlay — lighter so the scene shows through */}
-        <div className="absolute inset-0 bg-[#050508]/55 pointer-events-none" aria-hidden="true" />
+        {/* Subtle radial glow background */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(139,92,246,0.06), transparent 70%)" }}
+        />
 
-        {/* pointer-events-none lets mouse events fall through to Spline canvas;
-            tags get pointer-events-auto restored for their hover effects */}
-        <div className="relative z-10 max-w-[1380px] mx-auto px-8 py-24 pointer-events-none">
+        <div className="relative z-10 max-w-[1380px] mx-auto px-8 py-24">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-16 md:gap-24">
             <Reveal delay={0.05}>
               <p
@@ -386,11 +445,8 @@ function About() {
 }
 
 /* ─── Craft ─── */
-function Craft() {
+function CraftInteractions() {
   return (
-    <section id="craft" aria-label="Design craft showcase">
-
-      {/* Panel 1 — BackgroundBoxes */}
       <div className="relative min-h-screen overflow-hidden bg-[#03030A] flex items-center justify-center">
         <div className="absolute inset-0 z-0">
           <Boxes />
@@ -416,9 +472,9 @@ function Craft() {
               className="font-[family-name:var(--font-bodoni)] font-light
                 text-[clamp(2.8rem,7vw,6.5rem)] leading-[1.06] tracking-[-0.02em] text-[#F0EEE8]"
             >
-              Interactions that<br />
+              <span className="interact-word inline-block">{"Interactions".split("").map((c, i) => <span key={i}>{c}</span>)}</span> that<br />
               feel{" "}
-              <em className="italic bg-gradient-to-r from-[#FF6B6B] via-[#4AFF91] to-[#4A7CFF] bg-clip-text text-transparent">
+              <em className="italic flowing-gradient">
                 alive.
               </em>
             </h2>
@@ -434,10 +490,13 @@ function Craft() {
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none z-30 bg-gradient-to-b from-transparent to-[#050508]" aria-hidden="true" />
       </div>
+  );
+}
 
-      {/* Panel 2 — ShaderScene */}
+function CraftMotion() {
+  return (
       <div className="relative min-h-screen overflow-hidden bg-[#050508] flex items-center justify-center">
-        <div className="absolute inset-0 z-0" style={{ filter: "blur(10px)" }}>
+        <div className="absolute inset-0 z-0">
           <ShaderScene className="w-full h-full" />
         </div>
         <div
@@ -451,9 +510,9 @@ function Craft() {
               className="font-[family-name:var(--font-bodoni)] font-light
                 text-[clamp(2.8rem,7vw,6.5rem)] leading-[1.06] tracking-[-0.02em] text-[#F0EEE8]"
             >
-              Motion is<br />
+              <span className="wave-word inline-block">{"Motion".split("").map((c, i) => <span key={i} style={{ animationDelay: `${i * 0.07}s` }}>{c}</span>)}</span> is<br />
               the{" "}
-              <em className="italic bg-gradient-to-r from-[#FF6B6B] via-[#4AFF91] to-[#4A7CFF] bg-clip-text text-transparent">
+              <em className="italic flowing-gradient">
                 message.
               </em>
             </h2>
@@ -469,8 +528,11 @@ function Craft() {
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none z-30 bg-gradient-to-b from-transparent to-[#050508]" aria-hidden="true" />
       </div>
+  );
+}
 
-      {/* Panel 3 — GLSLHills */}
+function CraftDesigns() {
+  return (
       <div className="relative min-h-screen overflow-hidden bg-[#050508] flex items-center justify-center">
         <div className="absolute inset-0 z-0">
           <GLSLHills width="100%" height="100%" speed={0.4} />
@@ -486,8 +548,8 @@ function Craft() {
               className="font-[family-name:var(--font-bodoni)] font-light
                 text-[clamp(2.8rem,7vw,6.5rem)] leading-[1.06] tracking-[-0.02em] text-[#F0EEE8]"
             >
-              Designs that{" "}
-              <em className="italic bg-gradient-to-r from-[#FF6B6B] via-[#4AFF91] to-[#4A7CFF] bg-clip-text text-transparent">
+              <RevealWord>Designs</RevealWord> that{" "}
+              <em className="italic flowing-gradient">
                 speak
               </em>
               <br />louder than words.
@@ -504,8 +566,6 @@ function Craft() {
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none z-30 bg-gradient-to-b from-transparent to-[#050508]" aria-hidden="true" />
       </div>
-
-    </section>
   );
 }
 
@@ -513,9 +573,10 @@ function Craft() {
 const PROJECTS = [
   {
     num: "001",
-    name: "NeuralCanvas",
-    desc: "AI-powered generative art studio. Users describe a vision in natural language — the system composes, iterates, and renders. Built in 72 hours with Claude + Replicate.",
-    tech: ["Next.js", "Claude API", "Replicate", "WebGL"],
+    name: "Home.app",
+    desc: "A task management app built for clarity. Organize projects, track progress, and stay focused — designed for people who want their tools to stay out of the way.",
+    tech: ["Next.js", "React", "Vercel"],
+    link: "https://jyhome.vercel.app",
   },
   {
     num: "002",
@@ -534,7 +595,6 @@ const PROJECTS = [
 function Work() {
   return (
     <section
-      id="work"
       className="relative"
       aria-labelledby="work-title"
     >
@@ -581,7 +641,7 @@ function ProjectCard({
   const inView = useInView(ref, { once: true, amount: 0.15 });
   const [mouse, setMouse] = useState({ x: 50, y: 50 });
 
-  return (
+  const card = (
     <motion.article
       ref={ref}
       initial={{ opacity: 0, y: 36 }}
@@ -596,7 +656,7 @@ function ProjectCard({
           y: ((e.clientY - r.top) / r.height) * 100,
         });
       }}
-      tabIndex={0}
+      tabIndex={project.link ? undefined : 0}
       role="article"
       aria-label={`${project.name} project`}
       className="card-hover relative bg-[#080810] border border-white/[0.06]
@@ -678,13 +738,22 @@ function ProjectCard({
       </div>
     </motion.article>
   );
+
+  if (project.link) {
+    return (
+      <a href={project.link} target="_blank" rel="noopener noreferrer" className="block no-underline">
+        {card}
+      </a>
+    );
+  }
+
+  return card;
 }
 
 /* ─── Contact ─── */
 function Contact() {
   return (
     <section
-      id="contact"
       className="relative min-h-screen overflow-hidden"
       aria-labelledby="contact-title"
     >
@@ -809,6 +878,62 @@ function Footer() {
   );
 }
 
+/* ─── Dot Navigation ─── */
+const SECTIONS = ["hero", "about", "craft-1", "craft-2", "craft-3", "work", "contact"] as const;
+
+function DotNav() {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const els = SECTIONS.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    if (!els.length) return;
+
+    const update = () => {
+      const mid = window.innerHeight / 2;
+      let closest = 0;
+      let minDist = Infinity;
+      els.forEach((el, i) => {
+        const r = el.getBoundingClientRect();
+        const center = r.top + r.height / 2;
+        const dist = Math.abs(center - mid);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = i;
+        }
+      });
+      setActive(closest);
+    };
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
+  return (
+    <nav
+      aria-label="Page sections"
+      className="fixed right-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-1"
+    >
+      {SECTIONS.map((id, i) => (
+        <a
+          key={id}
+          href={`#${id}`}
+          aria-label={id.charAt(0).toUpperCase() + id.slice(1).replace("-", " ")}
+          className="flex items-center justify-center w-8 h-8"
+        >
+          <span
+            className={`block rounded-full transition-all duration-300 ${
+              active === i
+                ? "w-2.5 h-2.5 bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.4)]"
+                : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"
+            }`}
+          />
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 /* ─── Page ─── */
 export default function Page() {
   return (
@@ -816,22 +941,37 @@ export default function Page() {
       <a href="#main" className="skip-link">Skip to main content</a>
       <Cursor />
       <Nav />
+      <DotNav />
 
       <main id="main">
         {/* 1 — Hero */}
         <Hero />
 
         {/* 2 — About */}
-        <About />
+        <ScrollSection id="about">
+          <About />
+        </ScrollSection>
 
         {/* 3 — Craft */}
-        <Craft />
+        <ScrollSection id="craft-1">
+          <CraftInteractions />
+        </ScrollSection>
+        <ScrollSection id="craft-2">
+          <CraftMotion />
+        </ScrollSection>
+        <ScrollSection id="craft-3">
+          <CraftDesigns />
+        </ScrollSection>
 
         {/* 4 — Work */}
-        <Work />
+        <ScrollSection id="work">
+          <Work />
+        </ScrollSection>
 
         {/* 5 — Contact */}
-        <Contact />
+        <ScrollSection id="contact">
+          <Contact />
+        </ScrollSection>
       </main>
 
       <Footer />

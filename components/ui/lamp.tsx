@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export const LampContainer = ({
@@ -20,11 +19,8 @@ export const LampContainer = ({
     >
       <div className="relative flex w-full flex-1 scale-y-125 items-center justify-center isolate z-0">
         {/* Left cone — neon pink */}
-        <motion.div
-          initial={{ opacity: 0.5, width: "15rem" }}
-          whileInView={{ opacity: 1, width: "30rem" }}
-          transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }}
-          style={{ backgroundImage: `conic-gradient(var(--conic-position), var(--tw-gradient-stops))` }}
+        <div
+          style={{ backgroundImage: `conic-gradient(var(--conic-position), var(--tw-gradient-stops))`, opacity: 1, width: "30rem" }}
           className="absolute inset-auto right-1/2 h-56 overflow-visible w-[30rem]
             bg-gradient-conic from-pink-500 via-transparent to-transparent
             text-white [--conic-position:from_70deg_at_center_top]"
@@ -33,14 +29,11 @@ export const LampContainer = ({
             [mask-image:linear-gradient(to_top,white,transparent)]" />
           <div className="absolute w-40 h-full left-0 bg-[#050508] bottom-0 z-20
             [mask-image:linear-gradient(to_right,white,transparent)]" />
-        </motion.div>
+        </div>
 
         {/* Right cone — neon pink */}
-        <motion.div
-          initial={{ opacity: 0.5, width: "15rem" }}
-          whileInView={{ opacity: 1, width: "30rem" }}
-          transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }}
-          style={{ backgroundImage: `conic-gradient(var(--conic-position), var(--tw-gradient-stops))` }}
+        <div
+          style={{ backgroundImage: `conic-gradient(var(--conic-position), var(--tw-gradient-stops))`, opacity: 1, width: "30rem" }}
           className="absolute inset-auto left-1/2 h-56 w-[30rem]
             bg-gradient-conic from-transparent via-transparent to-pink-500
             text-white [--conic-position:from_290deg_at_center_top]"
@@ -49,7 +42,7 @@ export const LampContainer = ({
             [mask-image:linear-gradient(to_left,white,transparent)]" />
           <div className="absolute w-full right-0 bg-[#050508] h-40 bottom-0 z-20
             [mask-image:linear-gradient(to_top,white,transparent)]" />
-        </motion.div>
+        </div>
 
         {/* Fog layers */}
         <div className="absolute top-1/2 h-48 w-full translate-y-12 scale-x-150 bg-[#050508] blur-2xl" />
@@ -60,19 +53,15 @@ export const LampContainer = ({
           bg-pink-500 opacity-50 blur-3xl" />
 
         {/* Tight inner glow — fuchsia */}
-        <motion.div
-          initial={{ width: "8rem" }}
-          whileInView={{ width: "16rem" }}
-          transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }}
+        <div
+          style={{ width: "16rem" }}
           className="absolute inset-auto z-30 h-36 w-64 -translate-y-[6rem] rounded-full
             bg-fuchsia-400 blur-2xl"
         />
 
         {/* Horizontal beam line — fuchsia */}
-        <motion.div
-          initial={{ width: "15rem" }}
-          whileInView={{ width: "30rem" }}
-          transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }}
+        <div
+          style={{ width: "30rem" }}
           className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[7rem] bg-fuchsia-400"
         />
 

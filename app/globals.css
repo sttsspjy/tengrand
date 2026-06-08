@@ -10,15 +10,12 @@
   font-display: swap;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Inter:wght@300;400;500&family=Space+Mono&family=Syne:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Bodoni+Moda:ital,opsz,wght@0,6..96,300;0,6..96,400;1,6..96,300;1,6..96,400&family=Syncopate:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Inter:wght@300;400;500&family=Space+Mono&family=Bodoni+Moda:ital,opsz,wght@0,6..96,300;0,6..96,400;1,6..96,300;1,6..96,400&display=swap');
 
 :root {
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-mono: 'Space Mono', monospace;
-  --font-syne: 'Syne', sans-serif;
-  --font-syncopate: 'Syncopate', sans-serif;
   --font-volstead: 'Volstead', serif;
-  --font-fraunces: 'Fraunces', serif;
   --font-bodoni: 'Bodoni Moda', serif;
 
   --accent-blue:   #4A7CFF;
@@ -69,6 +66,75 @@ body {
   font-family: 'Inter', sans-serif;
 }
 .skip-link:focus { top: 1rem; }
+
+/* Flowing gradient text */
+@keyframes gradient-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.flowing-gradient {
+  background: linear-gradient(
+    90deg,
+    #FFB07A, #7EC8E3, #C4A1FF, #FFE08A,
+    #FFB07A, #7EC8E3, #C4A1FF, #FFE08A
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-flow 24s ease infinite;
+  filter: drop-shadow(0 0 8px rgba(196, 161, 255, 0.4)) drop-shadow(0 0 20px rgba(126, 200, 227, 0.2));
+}
+
+/* "Interactions" — individual character scale on hover */
+.interact-word {
+  border-bottom: 2.5px solid rgba(240, 238, 232, 0.5);
+}
+.interact-word span {
+  display: inline-block;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+.interact-word span:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 12px rgba(255, 176, 122, 0.7));
+}
+
+/* "message" — wave on hover */
+@keyframes wave-char {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-0.15em); }
+}
+.wave-word {
+  border-bottom: 2.5px solid rgba(240, 238, 232, 0.5);
+}
+.wave-word span {
+  display: inline-block;
+  transition: filter 0.3s ease;
+}
+.wave-word:hover span {
+  animation: wave-char 1.6s ease infinite;
+  filter: drop-shadow(0 0 10px rgba(126, 200, 227, 0.7));
+}
+
+/* "speak" — starry night reveal */
+/* "Designs" — Starry Night reveal */
+.reveal-word-wrap {
+  display: inline-block;
+  border-bottom: 2.5px solid rgba(240, 238, 232, 0.5);
+}
+.reveal-word {
+  display: inline-block;
+  cursor: default;
+  color: transparent;
+  background-image: url('/Van_Gogh_Starry_Night.jpg');
+  background-size: 100% 100%;
+  background-position: center;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-mask-image: radial-gradient(circle var(--reveal-r, 0px) at var(--reveal-x, 50%) var(--reveal-y, 50%), black 60%, transparent 100%);
+  mask-image: radial-gradient(circle var(--reveal-r, 0px) at var(--reveal-x, 50%) var(--reveal-y, 50%), black 60%, transparent 100%);
+}
 
 /* Scroll-pulse animation for hero indicator */
 @keyframes scroll-pulse {

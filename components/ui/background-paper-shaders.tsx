@@ -1,156 +1,224 @@
 "use client";
-import { useEffect, useRef } from "react";
-import * as THREE from "three";
+import { useEffect, useRef, useCallback } from "react";
+import { useVisible } from "@/lib/use-visible";
 
-const VERTEX = `
-  uniform float time;
-  uniform float intensity;
-  varying vec2 vUv;
-  varying vec3 vPosition;
+const PARTICLE_COUNT = 100;
+const FLOW_SCALE = 0.0015;
+const SPEED = 0.1;
+const CURSOR_RADIUS = 70;
+const CURSOR_FORCE = 1.5;
+const LINK_DISTANCE = 220;
 
-  void main() {
-    vUv = uv;
-    vPosition = position;
+const PALETTE = [
+  [74, 124, 255],
+  [139, 92, 246],
+  [74, 227, 181],
+  [255, 107, 107],
+  [74, 255, 145],
+];
 
-    vec3 pos = position;
-    pos.y += sin(pos.x * 10.0 + time) * 0.1 * intensity;
-    pos.x += cos(pos.y * 8.0 + time * 1.5) * 0.05 * intensity;
+function noise2D(x: number, y: number): number {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const fx = x - ix;
+  const fy = y - iy;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-  }
-`;
+  const h = (a: number, b: number) => {
+    let n = (a * 374761393 + b * 668265263 + 1376312589) | 0;
+    n = (n ^ (n >> 13)) * 1274126177;
+    n = n ^ (n >> 16);
+    return (n & 0x7fffffff) / 0x7fffffff;
+  };
 
-const FRAGMENT = `
-  uniform float time;
-  uniform float intensity;
-  uniform vec3 color1;
-  uniform vec3 color2;
-  varying vec2 vUv;
-  varying vec3 vPosition;
+  const a = h(ix, iy);
+  const b = h(ix + 1, iy);
+  const c = h(ix, iy + 1);
+  const d = h(ix + 1, iy + 1);
 
-  void main() {
-    vec2 uv = vUv;
-
-    float noise = sin(uv.x * 20.0 + time) * cos(uv.y * 15.0 + time * 0.8);
-    noise += sin(uv.x * 35.0 - time * 2.0) * cos(uv.y * 25.0 + time * 1.2) * 0.5;
-
-    vec3 color = mix(color1, color2, noise * 0.5 + 0.5);
-    color = mix(color, vec3(1.0), pow(abs(noise), 2.0) * intensity);
-
-    float glow = 1.0 - length(uv - 0.5) * 2.0;
-    glow = pow(glow, 2.0);
-
-    gl_FragColor = vec4(color * glow, glow * 0.8);
-  }
-`;
-
-interface PlaneConfig {
-  position: [number, number, number];
-  color1: string;
-  color2: string;
+  return a + sx * (b - a) + sy * (c - a) + sx * sy * (a - b - c + d);
 }
 
-interface RingConfig {
-  radius: number;
-  color: string;
-  speed: number;
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: number[];
 }
 
 export function ShaderScene({ className = "" }: { className?: string }) {
+  const { ref: visRef, visible } = useVisible<HTMLCanvasElement>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isVisible = useRef(false);
+  const setRefs = useCallback((el: HTMLCanvasElement | null) => {
+    (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
+    (visRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
+  }, [visRef]);
+  isVisible.current = visible;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) return;
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    camera.position.z = 3.5;
-
-    const planeConfigs: PlaneConfig[] = [
-      { position: [0, 0, 0],      color1: "#4A7CFF", color2: "#ffffff" },
-      { position: [-2, 0.8, -1.5], color1: "#8B5CF6", color2: "#FF6B6B" },
-      { position: [2, -0.8, -1],   color1: "#4AE3B5", color2: "#4A7CFF" },
-    ];
-
-    const planes = planeConfigs.map(({ position, color1, color2 }) => {
-      const uniforms = {
-        time:      { value: 0 },
-        intensity: { value: 1.0 },
-        color1:    { value: new THREE.Color(color1) },
-        color2:    { value: new THREE.Color(color2) },
-      };
-      const mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(2, 2, 32, 32),
-        new THREE.ShaderMaterial({ uniforms, vertexShader: VERTEX, fragmentShader: FRAGMENT, transparent: true, side: THREE.DoubleSide })
-      );
-      mesh.position.set(...position);
-      scene.add(mesh);
-      return { mesh, uniforms };
-    });
-
-    const ringConfigs: RingConfig[] = [
-      { radius: 1.2, color: "#4A7CFF", speed:  0.6 },
-      { radius: 1.8, color: "#8B5CF6", speed: -0.4 },
-      { radius: 2.4, color: "#4AE3B5", speed:  0.3 },
-    ];
-
-    const rings = ringConfigs.map(({ radius, color, speed }) => {
-      const mesh = new THREE.Mesh(
-        new THREE.RingGeometry(radius * 0.85, radius, 64),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
-      );
-      scene.add(mesh);
-      return { mesh, speed };
-    });
-
+    let w = 0;
+    let h = 0;
     let animId: number;
     let t = 0;
+    let bgCanvas: HTMLCanvasElement | null = null;
+
+    const paintNebula = () => {
+      const offscreen = document.createElement("canvas");
+      offscreen.width = Math.ceil(w);
+      offscreen.height = Math.ceil(h);
+      const offCtx = offscreen.getContext("2d")!;
+      offCtx.fillStyle = "rgb(5,5,8)";
+      offCtx.fillRect(0, 0, w, h);
+
+      const nebulaColors = [
+        "rgba(30,20,80,", "rgba(50,15,60,", "rgba(20,10,50,",
+        "rgba(60,10,30,", "rgba(15,25,70,", "rgba(40,8,55,",
+        "rgba(25,12,45,",
+      ];
+      for (let s = 0; s < 25; s++) {
+        const cx = Math.random() * w;
+        const cy = Math.random() * h;
+        const r = 100 + Math.random() * 300;
+        const c = nebulaColors[Math.floor(Math.random() * nebulaColors.length)];
+        const grad = offCtx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        grad.addColorStop(0, c + "0.14)");
+        grad.addColorStop(1, c + "0)");
+        offCtx.fillStyle = grad;
+        offCtx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      }
+      bgCanvas = offscreen;
+    };
+    const mouse = { x: -9999, y: -9999 };
+
+    const handleMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    };
+    const handleLeave = () => { mouse.x = -9999; mouse.y = -9999; };
+    canvas.addEventListener("mousemove", handleMove);
+    canvas.addEventListener("mouseleave", handleLeave);
+
+    const particles: Particle[] = [];
+
+    const spawn = (): Particle => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: 0,
+      vy: 0,
+      color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+    });
 
     const resize = () => {
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h, false);
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      w = rect.width;
+      h = rect.height;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      paintNebula();
+
+      particles.length = 0;
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push(spawn());
+      }
     };
 
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
-      t += 0.008;
-      planes.forEach(({ mesh, uniforms }, i) => {
-        uniforms.time.value = t;
-        uniforms.intensity.value = 1.0 + Math.sin(t * 1.5 + i) * 0.3;
-        mesh.rotation.y = Math.sin(t * 0.3 + i) * 0.4;
-        mesh.rotation.x = Math.cos(t * 0.2 + i) * 0.2;
-      });
-      rings.forEach(({ mesh, speed }, i) => {
-        mesh.rotation.z += speed * 0.01;
-        (mesh.material as THREE.MeshBasicMaterial).opacity = 0.2 + Math.sin(t * 2 + i * 1.3) * 0.15;
-      });
-      renderer.render(scene, camera);
-    };
-
-    renderer.setClearColor(0x000000, 0);
     resize();
     window.addEventListener("resize", resize);
-    animate();
+
+    const draw = () => {
+      animId = requestAnimationFrame(draw);
+      if (!isVisible.current) return;
+      t += 0.0015;
+
+      if (bgCanvas) {
+        ctx.drawImage(bgCanvas, 0, 0, w, h);
+      } else {
+        ctx.clearRect(0, 0, w, h);
+      }
+
+      // Update particles
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+
+        const angle = noise2D(p.x * FLOW_SCALE + t, p.y * FLOW_SCALE + t * 0.5) * Math.PI * 4;
+
+        p.vx = p.vx * 0.96 + Math.cos(angle) * SPEED * 0.04;
+        p.vy = p.vy * 0.96 + Math.sin(angle) * SPEED * 0.04;
+
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < CURSOR_RADIUS && dist > 0.1) {
+          const force = (1 - dist / CURSOR_RADIUS) * CURSOR_FORCE;
+          p.vx += (dx / dist) * force;
+          p.vy += (dy / dist) * force;
+        }
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Wrap around edges
+        if (p.x < 0) p.x += w;
+        else if (p.x > w) p.x -= w;
+        if (p.y < 0) p.y += h;
+        else if (p.y > h) p.y -= h;
+      }
+
+      // Draw lines between nearby particles
+      for (let i = 0; i < particles.length; i++) {
+        const a = particles[i];
+        for (let j = i + 1; j < particles.length; j++) {
+          const b = particles[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < LINK_DISTANCE) {
+            const opacity = (1 - dist / LINK_DISTANCE) * 0.35;
+            const r = Math.round((a.color[0] + b.color[0]) / 2);
+            const g = Math.round((a.color[1] + b.color[1]) / 2);
+            const bl = Math.round((a.color[2] + b.color[2]) / 2);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(${r},${g},${bl},${opacity})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw particles (dots)
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const [r, g, b] = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},0.7)`;
+        ctx.fill();
+      }
+    };
+
+    animId = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
-      planes.forEach(({ mesh }) => {
-        mesh.geometry.dispose();
-        (mesh.material as THREE.ShaderMaterial).dispose();
-      });
-      rings.forEach(({ mesh }) => {
-        mesh.geometry.dispose();
-        (mesh.material as THREE.MeshBasicMaterial).dispose();
-      });
-      renderer.dispose();
+      canvas.removeEventListener("mousemove", handleMove);
+      canvas.removeEventListener("mouseleave", handleLeave);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className={`w-full h-full block ${className}`} />;
+  return <canvas ref={setRefs} className={`w-full h-full block ${className}`} />;
 }

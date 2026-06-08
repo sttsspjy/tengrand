@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import * as THREE from "three";
+import { useVisible } from "@/lib/use-visible";
 
 export function GLSLHills({
   width = "100vw",
@@ -15,8 +16,15 @@ export function GLSLHills({
   planeSize?: number;
   speed?: number;
 }) {
+  const { ref: visRef, visible } = useVisible<HTMLDivElement>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isVisible = useRef(false);
+  const setContainerRef = useCallback((el: HTMLDivElement | null) => {
+    (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    (visRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+  }, [visRef]);
+  isVisible.current = visible;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -144,7 +152,10 @@ export function GLSLHills({
 
               void main(void) {
                 float opacity = (96.0 - length(vPosition)) / 256.0 * 0.6;
-                vec3 color = vec3(0.6);
+                float h = clamp((vPosition.y + 10.0) / 50.0, 0.0, 1.0);
+                vec3 coolBase = vec3(0.18, 0.25, 0.55);
+                vec3 warmPeak = vec3(0.75, 0.45, 0.25);
+                vec3 color = mix(coolBase, warmPeak, h);
                 gl_FragColor = vec4(color, opacity);
               }
             `,
@@ -172,9 +183,10 @@ export function GLSLHills({
     };
 
     const renderLoop = () => {
+      animId = requestAnimationFrame(renderLoop);
+      if (!isVisible.current) return;
       plane.render(clock.getDelta());
       renderer.render(scene, camera);
-      animId = requestAnimationFrame(renderLoop);
     };
 
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -195,7 +207,7 @@ export function GLSLHills({
   }, [cameraZ, planeSize, speed]);
 
   return (
-    <div ref={containerRef} style={{ position: "relative", width, height }}>
+    <div ref={setContainerRef} style={{ position: "relative", width, height }}>
       <canvas
         ref={canvasRef}
         style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, zIndex: 1 }}

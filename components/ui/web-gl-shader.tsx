@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import * as THREE from "three";
+import { useVisible } from "@/lib/use-visible";
 
 export function WebGLShader({ className, speed = 0.01 }: { className?: string; speed?: number }) {
+  const { ref: visRef, visible } = useVisible<HTMLCanvasElement>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isVisible = useRef(false);
+  const setRefs = useCallback((el: HTMLCanvasElement | null) => {
+    (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
+    (visRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
+  }, [visRef]);
+  isVisible.current = visible;
   const refsRef = useRef<{
     scene: THREE.Scene | null;
     camera: THREE.OrthographicCamera | null;
@@ -86,10 +94,11 @@ export function WebGLShader({ className, speed = 0.01 }: { className?: string; s
     window.addEventListener("resize", handleResize, { passive: true });
 
     const animate = () => {
+      refs.animationId = requestAnimationFrame(animate);
+      if (!isVisible.current) return;
       if (refs.uniforms) (refs.uniforms.time.value as number) += speed;
       if (refs.renderer && refs.scene && refs.camera)
         refs.renderer.render(refs.scene, refs.camera);
-      refs.animationId = requestAnimationFrame(animate);
     };
     animate();
 
@@ -107,7 +116,7 @@ export function WebGLShader({ className, speed = 0.01 }: { className?: string; s
 
   return (
     <canvas
-      ref={canvasRef}
+      ref={setRefs}
       className={className ?? "fixed top-0 left-0 w-full h-full block"}
       aria-hidden="true"
     />
