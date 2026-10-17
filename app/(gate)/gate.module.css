@@ -7,7 +7,7 @@
   --rule: rgba(235, 232, 225, 0.15);
   --g: clamp(18px, 2.2vw, 40px);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --display: var(--g-display), "Bodoni 72", Didot, serif;
+  --display: var(--g-display), Georgia, serif;
   --text: var(--g-text), "Helvetica Neue", Arial, sans-serif;
 
   background: var(--bg);

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Bodoni_Moda, Schibsted_Grotesk } from "next/font/google";
+import { Literata, Schibsted_Grotesk } from "next/font/google";
 import { intro } from "@/content/quiz";
 import s from "./gate.module.css";
 
-const display = Bodoni_Moda({
+const display = Literata({
   subsets: ["latin"],
   axes: ["opsz"],
   style: ["normal", "italic"],
