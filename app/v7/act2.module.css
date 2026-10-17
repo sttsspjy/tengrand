@@ -1,0 +1,534 @@
+/* ACT II · MACHINE ROOM: cyanotype field, white hairline schematics, stencil + B612 lettering, red pencil. */
+
+.layer {
+  --blue: #143f78;
+  --blue-deep: #0f3264;
+  --white: #ecf3ff;
+  --white-2: rgba(236, 243, 255, 0.62);
+  --white-3: rgba(236, 243, 255, 0.36);
+  --red: #ff6840;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  visibility: hidden;
+  color: var(--white);
+  font-family: var(--f-tech), monospace;
+}
+.layer[data-on] {
+  visibility: visible;
+}
+.layer ::selection {
+  background: var(--red);
+  color: var(--blue);
+}
+
+.world {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: circle(0px at 50% 50%);
+}
+
+.paper {
+  position: absolute;
+  inset: 0;
+  background-color: var(--blue);
+  /* mottle + grain textures are generated once in JS (SVG turbulence here cost ~70ms on first paint) */
+  background-image: var(--mottle, none), var(--grain, none), repeating-linear-gradient(0deg, transparent 0 23px, rgba(236, 243, 255, 0.045) 23px 24px),
+    repeating-linear-gradient(90deg, transparent 0 23px, rgba(236, 243, 255, 0.045) 23px 24px);
+  background-size: 900px 900px, 200px 200px, auto, auto;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+/* drawing frame with zone references */
+.frame {
+  position: absolute;
+  inset: 52px 16px 16px;
+  border: 1px solid var(--white-3);
+  pointer-events: none;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  transition: opacity 0.5s;
+}
+.frame::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(236, 243, 255, 0.14);
+}
+.zoneH {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--white-3);
+  text-align: center;
+  padding-top: 10px;
+  border-left: 1px solid rgba(236, 243, 255, 0.14);
+  height: 30px;
+}
+.zoneH:first-of-type {
+  border-left: 0;
+}
+.zoneV {
+  position: absolute;
+  left: 12px;
+  font-size: 9px;
+  color: var(--white-3);
+}
+.zoneV:nth-child(1) {
+  top: 12%;
+}
+.zoneV:nth-child(2) {
+  top: 37%;
+}
+.zoneV:nth-child(3) {
+  top: 62%;
+}
+.zoneV:nth-child(4) {
+  top: 87%;
+}
+
+/* ---------------------------------------------------------------- intro title */
+
+.cap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.intro {
+  position: absolute;
+  left: 6vw;
+  right: 6vw;
+  top: 15vh;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.intro[data-on] {
+  opacity: 1;
+  transform: none;
+}
+.introKick {
+  font-size: 14px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+.introTitle {
+  font-family: var(--f-stencil), sans-serif;
+  font-weight: 900;
+  font-variation-settings: "opsz" 72;
+  font-size: min(17vw, 30vh);
+  line-height: 0.82;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  margin: 0.08em 0 0.12em -0.04em !important;
+}
+.introList {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 4px 40px;
+  font-size: 13px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  color: var(--white-2);
+}
+.introList b {
+  font-weight: 400;
+  color: var(--red);
+  margin-right: 8px;
+}
+
+/* ---------------------------------------------------------------- units: title block + callouts */
+
+.unit {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.unit[data-on] {
+  visibility: visible;
+}
+.block {
+  position: absolute;
+  left: 34px;
+  bottom: 34px;
+  width: min(560px, 40vw);
+  border: 1px solid var(--white);
+  background: var(--blue-deep);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.35s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.unit[data-on] .block {
+  opacity: 1;
+  transform: none;
+}
+.blockRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--white-3);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.blockRow span {
+  padding: 7px 12px 6px;
+  border-left: 1px solid var(--white-3);
+}
+.blockRow span:first-child {
+  border-left: 0;
+  color: var(--red);
+}
+.blockTitle {
+  font-family: var(--f-stencil), sans-serif;
+  font-weight: 800;
+  font-variation-settings: "opsz" 72;
+  font-size: clamp(36px, 3.6vw, 64px);
+  line-height: 0.92;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  padding: 12px 14px 6px;
+}
+.blockLine {
+  padding: 0 14px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--white-2);
+}
+
+.parts {
+  list-style: none;
+}
+.part {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 10px;
+  align-items: baseline;
+  margin-top: -0.85em;
+  padding: 2px 8px 3px 6px;
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: default;
+  outline-offset: 2px;
+  opacity: 0;
+  transition: opacity 0.4s, background-color 0.2s, color 0.2s;
+}
+.unit[data-on] .part {
+  opacity: 1;
+}
+.part:nth-child(2) {
+  transition-delay: 0.04s;
+}
+.part:nth-child(3) {
+  transition-delay: 0.08s;
+}
+.part:nth-child(4) {
+  transition-delay: 0.12s;
+}
+.part:nth-child(5) {
+  transition-delay: 0.16s;
+}
+.part:hover,
+.part:focus-visible {
+  background: var(--white);
+  color: var(--blue);
+}
+.partNo {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--white-3);
+}
+.part:hover .partNo,
+.part:focus-visible .partNo {
+  color: var(--blue);
+}
+.partName {
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+.partUsed {
+  grid-column: 2;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--red);
+}
+.part[data-hit] .partName {
+  color: var(--red);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.part[data-hit]:hover .partName {
+  color: var(--blue);
+}
+.part[data-flash] {
+  background: var(--red);
+  color: var(--blue);
+}
+
+/* ---------------------------------------------------------------- query console */
+
+.console {
+  position: absolute;
+  right: 34px;
+  bottom: 34px;
+  width: min(430px, 32vw);
+  border: 1px solid var(--white);
+  background: var(--blue-deep);
+  padding: 12px 14px 12px;
+  transition: opacity 0.5s;
+}
+.feed {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.feedLabel {
+  font-family: var(--f-stencil), sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+.feedInput {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--white);
+  border-radius: 0;
+  padding: 3px 0 5px;
+  font: 15px var(--f-tech), monospace;
+  color: var(--white);
+  caret-color: var(--red);
+  outline: none;
+}
+.feedInput::placeholder {
+  color: var(--white-3);
+}
+.layer .feedInput:focus-visible {
+  outline: none;
+  border-bottom-color: var(--red);
+  box-shadow: 0 1px 0 var(--red);
+}
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  margin: 9px 0 8px;
+  font-size: 11px;
+}
+.preset {
+  font: 11px var(--f-tech), monospace;
+  background: none;
+  border: 0;
+  color: var(--white-2);
+  padding: 2px 0;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.preset::before {
+  content: "/";
+  margin: 0 8px;
+  color: var(--white-3);
+}
+.preset:first-child::before {
+  content: "▸";
+  margin-left: 0;
+  color: var(--red);
+}
+.preset:hover {
+  color: var(--white);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.log {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(10.5px * 1.6 * 5);
+  font-size: 10.5px;
+  line-height: 1.6;
+  border-top: 1px solid var(--white-3);
+  padding-top: 7px;
+}
+.log:empty {
+  display: none;
+}
+.logLine {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.logLink {
+  font: inherit;
+  color: var(--white);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.logLink:hover {
+  color: var(--red);
+}
+
+/* phases: hide the room's chrome while it is a portal (t1) or under the press (t2) */
+.layer[data-phase="portal"] .frame,
+.layer[data-phase="portal"] .console,
+.layer[data-phase="portal"] .cap,
+.layer[data-phase="press"] .console,
+.layer[data-phase="press"] .cap,
+.layer[data-phase="press"] .frame {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.rim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  visibility: hidden;
+}
+.rim circle {
+  fill: none;
+}
+.rimRed {
+  stroke: #c8361d;
+  stroke-width: 3;
+}
+.rimWhite {
+  stroke: #ecf3ff;
+  stroke-width: 1;
+  stroke-dasharray: 1 7;
+}
+.rimInk {
+  stroke: #1a1714;
+  stroke-width: 1.2;
+}
+
+@media (max-width: 819px) {
+  .frame {
+    inset: 46px 8px 8px;
+  }
+  .zoneH,
+  .zoneV {
+    display: none;
+  }
+  .intro {
+    left: 18px;
+    right: 18px;
+    top: auto;
+    bottom: 6svh;
+  }
+  .introTitle {
+    font-size: 16.5vw;
+  }
+  .introList {
+    grid-template-columns: 1fr;
+    gap: 0;
+    font-size: 11.5px;
+  }
+  .unit {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 10px 10px;
+  }
+  .block {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: auto;
+    border-bottom: 0;
+  }
+  .blockTitle {
+    font-size: 30px;
+    padding: 8px 10px 4px;
+  }
+  .blockLine {
+    font-size: 11.5px;
+    padding: 0 10px 8px;
+  }
+  .blockRow span {
+    padding: 5px 8px 4px;
+    font-size: 9px;
+  }
+  .parts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 8px;
+    padding: 6px 10px 8px;
+    border: 1px solid var(--white);
+    border-top: 1px solid var(--white-3);
+    background: var(--blue-deep);
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+  .unit[data-on] .parts {
+    opacity: 1;
+  }
+  .part {
+    position: static;
+    transform: none !important;
+    margin: 0;
+    padding: 2px 0;
+    white-space: normal;
+    grid-template-columns: auto 1fr;
+    column-gap: 6px;
+  }
+  .partName {
+    font-size: 12.5px;
+  }
+  .partNo {
+    font-size: 8.5px;
+  }
+  .partUsed {
+    display: none;
+  }
+  .console {
+    left: 10px;
+    right: 10px;
+    top: 50px;
+    bottom: auto;
+    width: auto;
+    padding: 8px 10px;
+  }
+  .feedLabel {
+    font-size: 16px;
+  }
+  .feedInput {
+    font-size: 16px;
+  }
+  .presets {
+    margin: 6px 0 4px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .log {
+    min-height: calc(10px * 1.5 * 2);
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .log > span:nth-child(n + 3) {
+    display: none;
+  }
+}

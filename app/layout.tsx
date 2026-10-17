@@ -1,24 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Jaeyoung — AI-Native Builder",
-  description:
-    "I ship entire products with AI. Portfolio of Jaeyoung, vibecoder and AI-native builder.",
-  openGraph: {
-    title: "Jaeyoung — AI-Native Builder",
-    description: "I ship entire products with AI.",
-    type: "website",
-  },
+  title: "Jaeyoung | AI-native builder",
+  description: "Portfolio of Jaeyoung, an AI-native builder who ships whole products by directing AI.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const viewport: Viewport = { themeColor: "#000000" };
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

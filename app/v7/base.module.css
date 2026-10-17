@@ -1,0 +1,280 @@
+/* Codex: shell. One fixed stage holds three act layers; the HUD re-inks itself per act. */
+
+.root {
+  --paper: #f1ece1;
+  --ink: #1a1714;
+  --red: #c8361d;
+  --blue: #143f78;
+  --white: #ecf3ff;
+  --orange: #ff5d1f;
+  --teal: #0b8a8c;
+  --black: #1c1a19;
+  --riso-paper: #f3eee3;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  background: #1b1815;
+  color: var(--ink);
+  font-family: var(--f-text), Georgia, serif;
+  min-height: 100dvh;
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.root :where(p, h1, h2, h3, dl, dd, figure, ol, ul) {
+  margin: 0;
+  padding: 0;
+}
+.root a {
+  color: inherit;
+}
+
+.page {
+  position: relative;
+}
+
+.skip {
+  position: fixed;
+  left: 16px;
+  top: -60px;
+  z-index: 90;
+  background: var(--ink);
+  color: var(--paper) !important;
+  padding: 8px 14px;
+  font: 15px var(--f-text), Georgia, serif;
+}
+.skip:focus {
+  top: 52px;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  contain: strict;
+}
+
+/* ---------------------------------------------------------------- HUD */
+
+.hud {
+  position: fixed;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 40px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 22px;
+  font: 500 12px/1 var(--f-text), Georgia, serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: var(--hud-bg);
+  color: var(--hud-fg);
+  transition: background-color 0.5s, color 0.5s;
+  --hud-bg: rgba(241, 236, 225, 0.94);
+  --hud-fg: #1a1714;
+  --hud-acc: #c8361d;
+  --hud-rule: rgba(26, 23, 20, 0.6);
+}
+.page[data-act="2"] .hud {
+  font: 400 10.5px/1 var(--f-tech), monospace;
+  letter-spacing: 0.12em;
+  --hud-bg: rgba(16, 52, 101, 0.94);
+  --hud-fg: #ecf3ff;
+  --hud-acc: #ff6840;
+  --hud-rule: rgba(236, 243, 255, 0.5);
+}
+.page[data-act="3"] .hud {
+  --hud-bg: rgba(243, 238, 227, 0.95);
+  --hud-fg: #1c1a19;
+  --hud-acc: #ff5d1f;
+  --hud-rule: #1c1a19;
+}
+.hud::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--hud-rule);
+}
+.hudBrand {
+  font-family: var(--f-display), serif;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-style: italic;
+}
+.page[data-act="2"] .hudBrand {
+  font: 800 17px var(--f-stencil), sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.page[data-act="3"] .hudBrand {
+  font: 900 15px var(--f-poster), sans-serif;
+  font-stretch: 125%;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+.hudActs {
+  display: flex;
+  gap: 26px;
+  list-style: none;
+}
+.hudActs a {
+  text-decoration: none;
+  opacity: 0.45;
+  transition: opacity 0.3s, color 0.3s;
+  white-space: nowrap;
+}
+.hudActs a:hover {
+  opacity: 0.85;
+}
+.hudActs b {
+  font-weight: 600;
+  margin-right: 6px;
+  color: var(--hud-acc);
+}
+.page[data-sec="1"] .hudActs li[data-a="1"] a,
+.page[data-sec="2"] .hudActs li[data-a="2"] a,
+.page[data-sec="3"] .hudActs li[data-a="3"] a,
+.page[data-sec="4"] .hudActs li[data-a="4"] a {
+  opacity: 1;
+}
+.hudRight {
+  justify-self: end;
+  opacity: 0.6;
+}
+.hudTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  overflow: hidden;
+}
+.hudProg {
+  display: block;
+  height: 100%;
+  background: var(--hud-acc);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.root :focus-visible {
+  outline: 2px solid var(--hud-focus, #c8361d);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------- footer (shown at the last station) */
+
+.footer {
+  position: fixed;
+  z-index: 35;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  align-items: center;
+  padding: 12px 22px 13px;
+  background: rgba(243, 238, 227, 0.96);
+  border-top: 1px solid var(--black);
+  color: var(--black);
+  transform: translateY(102%);
+  transition: transform 0.7s var(--ease);
+  visibility: hidden;
+}
+.footer[data-on] {
+  transform: none;
+  visibility: visible;
+}
+.colMeta {
+  display: flex;
+  gap: 22px;
+  font: 500 12px var(--f-text), Georgia, serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.colTop {
+  color: var(--orange) !important;
+  text-decoration: none;
+}
+.colTop:hover {
+  text-decoration: underline;
+}
+.restart {
+  font: 800 15px/1 var(--f-poster), sans-serif;
+  font-stretch: 125%;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+  padding-bottom: 3px;
+  background: linear-gradient(var(--orange), var(--orange)) 0 100% / 100% 3px no-repeat;
+  transition: background-size 0.35s var(--ease), color 0.2s;
+}
+.restart:hover,
+.restart:focus-visible {
+  color: var(--orange) !important;
+  background-size: 100% 1px;
+}
+
+@media (max-width: 819px) {
+  .hud {
+    padding: 0 14px;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+  }
+  .hudRight {
+    display: none;
+  }
+  .hudActs {
+    justify-self: end;
+    gap: 14px;
+  }
+  .hudActs a {
+    font-size: 0;
+    letter-spacing: 0;
+  }
+  .hudActs b {
+    font-size: 11px;
+    margin: 0;
+    padding: 6px 2px;
+    display: inline-block;
+  }
+  .page[data-sec="1"] .hudActs li[data-a="1"] a,
+  .page[data-sec="2"] .hudActs li[data-a="2"] a,
+  .page[data-sec="3"] .hudActs li[data-a="3"] a,
+  .page[data-sec="4"] .hudActs li[data-a="4"] a {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+  }
+  .page[data-act="2"][data-sec="2"] .hudActs li[data-a="2"] a {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+  .page[data-sec="1"] .hudActs li[data-a="1"] b,
+  .page[data-sec="2"] .hudActs li[data-a="2"] b,
+  .page[data-sec="3"] .hudActs li[data-a="3"] b,
+  .page[data-sec="4"] .hudActs li[data-a="4"] b {
+    margin-right: 6px;
+  }
+  .footer {
+    gap: 12px;
+    padding: 10px 14px 12px;
+  }
+  .colMeta {
+    gap: 14px;
+    font-size: 11px;
+  }
+  .colTop {
+    display: none;
+  }
+  .restart {
+    font-size: 13px;
+  }
+}

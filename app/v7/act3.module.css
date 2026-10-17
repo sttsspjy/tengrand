@@ -1,0 +1,858 @@
+/* ACT III · PRINTS: risograph wall. Fluorescent orange, teal, black on off-white stock; Archivo expanded. */
+
+.layer {
+  --paper: #f3eee3;
+  --wall: #e6e0d3;
+  --orange: #ff5d1f;
+  --teal: #0b8a8c;
+  --black: #1c1a19;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  visibility: hidden;
+  overflow: hidden;
+  perspective: 1500px;
+  color: var(--black);
+  font-family: var(--f-text), Georgia, serif;
+}
+.layer[data-on] {
+  visibility: visible;
+}
+.layer[data-phase="a3"] {
+  background-color: var(--wall);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .12  0 0 0 0 .1  0 0 0 0 .08  0 0 0 .1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.layer ::selection {
+  background: var(--orange);
+  color: var(--black);
+}
+
+.wall {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 690vw;
+  height: 100vh;
+  height: 100svh;
+  transform-origin: 0 0;
+  transform: translate3d(50vw, 50vh, 0) scale(2) translate3d(-50vw, -50svh, 0);
+  will-change: transform;
+}
+.layer[data-phase="press"] .station,
+.layer[data-phase="press"] .contact,
+.layer[data-phase="press"] .wallDeco,
+.layer[data-phase="press"] .stamps,
+.layer[data-phase="press"] .hint {
+  visibility: hidden;
+}
+
+.wallDeco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.wallNumeral {
+  position: absolute;
+  left: 76vw;
+  top: -4svh;
+  font: 900 46vh/1 var(--f-poster), sans-serif;
+  font-stretch: 125%;
+  color: rgba(28, 26, 25, 0.05);
+  letter-spacing: -0.04em;
+}
+
+/* ---------------------------------------------------------------- title sheet (printed by the press) */
+
+.titleSheet {
+  position: absolute;
+  left: 25vw;
+  top: 25vh;
+  top: 25svh;
+  width: 50vw;
+  height: 50vh;
+  height: 50svh;
+  container-type: size;
+}
+.layer[data-phase="a3"] .titleSheet {
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.18), 0 26px 60px -20px rgba(40, 30, 20, 0.5);
+}
+.passOrange,
+.passTeal,
+.passKey {
+  position: absolute;
+  inset: 0;
+}
+.passOrange {
+  background: var(--paper);
+}
+.passOrange .htFill {
+  position: absolute;
+  inset: 2.4cqmin;
+  width: calc(100% - 4.8cqmin);
+  height: calc(100% - 4.8cqmin);
+}
+.passTeal {
+  mix-blend-mode: multiply;
+  transform: translate(0.35cqw, -0.3cqh);
+}
+.passTeal .htFill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.tealRing {
+  --cx: 70%;
+  --cy: 42%;
+  position: absolute;
+  left: calc(var(--cx) - 44cqmin);
+  top: calc(var(--cy) - 44cqmin);
+  width: 88cqmin;
+  height: 88cqmin;
+  border-radius: 50%;
+  border: 0.45cqmin solid var(--teal);
+}
+.tealRing2 {
+  left: calc(var(--cx) - 52cqmin);
+  top: calc(var(--cy) - 52cqmin);
+  width: 104cqmin;
+  height: 104cqmin;
+  border-width: 0.22cqmin;
+}
+.passKey {
+  mix-blend-mode: multiply;
+  transform: translate(-0.2cqw, 0.15cqh);
+  color: var(--black);
+}
+.tKick {
+  position: absolute;
+  left: 5.5cqw;
+  top: 7cqh;
+  font: 500 calc(1.1cqw + 0.8cqh) var(--f-text), serif;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.tTitle {
+  position: absolute;
+  left: 4.6cqw;
+  bottom: 16cqh;
+  font: 900 min(12.6cqw, 30cqh) / 0.8 var(--f-poster), sans-serif;
+  font-stretch: 125%;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+.tList {
+  position: absolute;
+  left: 5.5cqw;
+  top: 12.5cqh;
+  list-style: none;
+  font: 800 calc(0.9cqw + 1cqh) / 1.3 var(--f-poster), sans-serif;
+  font-stretch: 112%;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.tList b {
+  display: inline-block;
+  width: 2.6em;
+  font: 500 0.7em var(--f-text), serif;
+  letter-spacing: 0.16em;
+}
+.reg {
+  position: absolute;
+  width: 3.2cqmin;
+  height: 3.2cqmin;
+  border: 1px solid var(--black);
+  border-radius: 50%;
+}
+.reg::before,
+.reg::after {
+  content: "";
+  position: absolute;
+  background: var(--black);
+}
+.reg::before {
+  left: 50%;
+  top: -40%;
+  bottom: -40%;
+  width: 1px;
+}
+.reg::after {
+  top: 50%;
+  left: -40%;
+  right: -40%;
+  height: 1px;
+}
+.regTL {
+  left: 1.6cqmin;
+  top: 1.6cqmin;
+}
+.regTR {
+  right: 1.6cqmin;
+  top: 1.6cqmin;
+}
+.regBL {
+  left: 1.6cqmin;
+  bottom: 1.6cqmin;
+}
+.regBR {
+  right: 2.4cqw;
+  bottom: 2.4cqw;
+}
+.bars {
+  position: absolute;
+  right: 5.5cqw;
+  top: 7cqh;
+  display: flex;
+  gap: 0.6cqw;
+}
+.bars i {
+  width: 2.4cqw;
+  height: 2.4cqw;
+  display: block;
+}
+
+@container (aspect-ratio < 1) {
+  .tealRing {
+    --cx: 60%;
+    --cy: 38%;
+  }
+  .tKick {
+    font-size: 3.4cqw;
+    letter-spacing: 0.16em;
+  }
+  .tList {
+    top: 11cqh;
+    font-size: 4.6cqw;
+  }
+  .tTitle {
+    font-size: 12.8cqw;
+    bottom: 12cqh;
+  }
+  .bars {
+    top: auto;
+    bottom: 5cqh;
+  }
+}
+
+/* ---------------------------------------------------------------- the press */
+
+.rollers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.roller {
+  position: absolute;
+  left: -3vw;
+  right: -3vw;
+  top: 0;
+  height: 13vh;
+  visibility: hidden;
+  background-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.6) 0%,
+      rgba(0, 0, 0, 0.05) 20%,
+      rgba(255, 255, 255, 0.42) 33%,
+      rgba(255, 255, 255, 0) 47%,
+      rgba(0, 0, 0, 0) 66%,
+      rgba(0, 0, 0, 0.62) 100%
+    ),
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 17px, rgba(0, 0, 0, 0.13) 17px 20px);
+  background-size: 100% 100%, 100% 40px;
+  box-shadow: 0 34px 46px -10px rgba(0, 0, 0, 0.5), 0 -4px 16px rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+}
+.roller::before,
+.roller::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 7vw;
+  height: 26%;
+  margin-top: -1px;
+  transform: translateY(-50%);
+  background: linear-gradient(to bottom, #2b2b2b, #8a8a8a 40%, #3a3a3a);
+}
+.roller::before {
+  left: -4vw;
+}
+.roller::after {
+  right: -4vw;
+}
+.roller[data-ink="orange"] {
+  background-color: var(--orange);
+}
+.roller[data-ink="teal"] {
+  background-color: var(--teal);
+}
+.roller[data-ink="black"] {
+  background-color: #262422;
+}
+
+/* ---------------------------------------------------------------- stations + posters */
+
+.station {
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5vw;
+  padding: 64px 7vw 34px;
+}
+.station[data-station="work-0"] {
+  left: 112vw;
+}
+.station[data-station="work-1"] {
+  left: 222vw;
+  padding-top: 92px;
+}
+.station[data-station="work-2"] {
+  left: 332vw;
+}
+.station[data-station="work-3"] {
+  left: 442vw;
+  padding-top: 92px;
+}
+
+.poster {
+  position: relative;
+  height: min(76svh, 980px);
+  aspect-ratio: 0.72;
+  flex: none;
+}
+.station[data-station="work-1"] .poster {
+  order: 2;
+}
+.station[data-station="work-3"] .poster {
+  order: 2;
+}
+.pin {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: -10px;
+  width: 64px;
+  height: 22px;
+  margin-left: -32px;
+  background: rgba(240, 232, 214, 0.78);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  rotate: -3deg;
+}
+.sheet {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 0;
+  background: var(--paper);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16), 0 30px 50px -22px rgba(40, 30, 20, 0.55);
+  container-type: inline-size;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+.sheet[data-grab] {
+  cursor: grabbing;
+}
+.inkTeal,
+.inkOrange,
+.inkKey {
+  position: absolute;
+  inset: 0;
+}
+.inkTeal,
+.inkOrange {
+  mix-blend-mode: multiply;
+  will-change: transform;
+}
+.tealCanvas {
+  position: absolute;
+  left: 6cqw;
+  right: 6cqw;
+  top: 12cqw;
+  width: 88cqw;
+  height: 64cqw;
+}
+.tealBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4.2cqw;
+  background: var(--teal);
+}
+.orangeArt {
+  position: absolute;
+  left: 6cqw;
+  top: 12cqw;
+  width: 88cqw;
+  height: 64cqw;
+  fill: none;
+  stroke: var(--orange);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.oDash {
+  stroke-dasharray: 3 4;
+}
+.bigNum {
+  position: absolute;
+  right: 4cqw;
+  top: 49cqw;
+  font: 900 34cqw/0.78 var(--f-poster), sans-serif;
+  font-stretch: 125%;
+  letter-spacing: -0.05em;
+  color: var(--orange);
+}
+.inkKey {
+  color: var(--black);
+}
+.pTop {
+  position: absolute;
+  left: 6cqw;
+  right: 6cqw;
+  top: 4.4cqw;
+  display: flex;
+  align-items: center;
+  gap: 2.4cqw;
+  font: 500 3.4cqw var(--f-text), serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.pRule {
+  flex: 1;
+  height: 0.4cqw;
+  background: var(--black);
+}
+.pName {
+  position: absolute;
+  left: 5cqw;
+  right: 3cqw;
+  bottom: 25cqw;
+  font: 900 min(20cqw, calc(90cqw / var(--len))) / 0.84 var(--f-poster), sans-serif;
+  font-stretch: 125%;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.pKind {
+  position: absolute;
+  left: 6cqw;
+  bottom: 15cqw;
+  font: 500 3.6cqw var(--f-text), serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* museum wall label */
+.label {
+  width: min(30vw, 470px);
+  flex: none;
+  font-size: 18px;
+  line-height: 1.5;
+}
+.labelNo {
+  font: 900 13px var(--f-poster), sans-serif;
+  font-stretch: 125%;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--orange);
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--black);
+}
+.labelKind {
+  margin-top: 12px !important;
+  font: 500 12.5px var(--f-text), serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.labelDesc {
+  margin-top: 14px !important;
+  font-size: clamp(17px, 1.3vw, 21px);
+  text-wrap: pretty;
+}
+.labelStack {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  font: 16px/1.7 var(--f-text), serif;
+  margin-top: 16px !important;
+}
+.labelStack li::after {
+  content: "·";
+  margin: 0 9px;
+  color: var(--orange);
+}
+.labelStack li:last-child::after {
+  content: "";
+}
+.labelStack a {
+  text-decoration: underline;
+  text-decoration-color: var(--orange);
+  text-underline-offset: 3px;
+}
+.labelStack a:hover {
+  color: var(--orange);
+}
+.labelLink {
+  display: inline-block;
+  margin-top: 16px;
+  font: 800 15px var(--f-poster), sans-serif;
+  font-stretch: 112%;
+  text-decoration: none;
+  border-bottom: 3px solid var(--orange);
+  padding-bottom: 2px;
+}
+.labelLink:hover {
+  color: var(--orange);
+}
+.labelStatus {
+  display: inline-block;
+  margin-top: 16px !important;
+  padding: 5px 9px 4px;
+  border: 1px solid var(--black);
+  font: 500 12.5px var(--f-text), serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------- correspondence */
+
+.contact {
+  position: absolute;
+  left: 556vw;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 56px 6vw 110px;
+}
+.envelope {
+  position: relative;
+  width: min(1060px, 74vw);
+  aspect-ratio: 1.72;
+  padding: 16px;
+  background: repeating-linear-gradient(135deg, var(--orange) 0 26px, var(--paper) 26px 36px, var(--teal) 36px 62px, var(--paper) 62px 72px);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16), 0 34px 60px -24px rgba(40, 30, 20, 0.55);
+  rotate: -1.2deg;
+  container-type: inline-size;
+}
+.envInner {
+  position: relative;
+  height: 100%;
+  background: var(--paper);
+  padding: 5cqw 5cqw 4cqw;
+  display: flex;
+  flex-direction: column;
+}
+.envKick {
+  font: 500 max(14px, 1.7cqw) var(--f-text), serif;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+.envTitle {
+  margin-top: 1.4cqw !important;
+  max-width: 62cqw;
+  font: 900 10cqw/0.9 var(--f-poster), sans-serif;
+  font-stretch: 125%;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+.envEmail,
+.envAlt,
+.envFrom {
+  margin-left: 18cqw !important;
+}
+.envLines {
+  position: absolute;
+  left: 23cqw;
+  right: 5cqw;
+  bottom: 4.2cqw;
+  height: 11cqw;
+  background: repeating-linear-gradient(to bottom, transparent 0 calc(3.6cqw - 1px), rgba(28, 26, 25, 0.22) calc(3.6cqw - 1px) 3.6cqw);
+  pointer-events: none;
+}
+.envEmail {
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: auto;
+  font: 800 5.9cqw/1.05 var(--f-poster), sans-serif;
+  font-stretch: 112%;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  background-image: linear-gradient(var(--orange), var(--orange));
+  background-size: 100% 0.5cqw;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.35s var(--ease), color 0.2s;
+  padding-bottom: 0.3cqw;
+}
+.envEmail:hover,
+.envEmail:focus-visible {
+  background-size: 100% 100%;
+  color: var(--black);
+}
+.envAlt {
+  margin-top: 1.6cqw !important;
+  font-size: max(15px, 1.7cqw);
+}
+.envAltLabel {
+  font: 500 max(11px, 1.15cqw) var(--f-text), serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6b645a;
+  margin-right: 1.2cqw;
+}
+.envAlt a {
+  font: 700 max(14px, 1.6cqw) var(--f-poster), sans-serif;
+  font-stretch: 112%;
+  text-decoration: underline;
+  text-decoration-color: var(--teal);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.envAlt a:hover {
+  color: var(--teal);
+}
+.envFrom {
+  margin-top: 1.2cqw !important;
+  font: 500 max(11px, 1.15cqw) var(--f-text), serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6b645a;
+}
+.postage {
+  position: absolute;
+  right: 4.6cqw;
+  top: 4.6cqw;
+  width: 12cqw;
+  aspect-ratio: 0.8;
+  background: var(--orange);
+  -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0.42cqw, #000 0.48cqw) -0.55cqw -0.55cqw / 1.1cqw 1.1cqw;
+  mask: radial-gradient(circle at 50% 50%, transparent 0.42cqw, #000 0.48cqw) -0.55cqw -0.55cqw / 1.1cqw 1.1cqw;
+  padding: 1.1cqw;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  color: var(--paper);
+}
+.postJ {
+  grid-row: 2;
+  justify-self: center;
+  align-self: center;
+  font: italic 300 7cqw/1 var(--f-display), serif;
+}
+.postVal {
+  grid-row: 1;
+  font: 900 1.4cqw var(--f-poster), sans-serif;
+  font-stretch: 125%;
+}
+.postmark {
+  position: absolute;
+  right: 12cqw;
+  top: 9cqw;
+  width: 16cqw;
+  height: 16cqw;
+  mix-blend-mode: multiply;
+  rotate: -14deg;
+  opacity: 0.88;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- stamps + hint */
+
+.stamps {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.stamp {
+  position: absolute;
+  width: 132px;
+  height: 132px;
+  margin: -66px 0 0 -66px;
+  background-size: contain;
+  mix-blend-mode: multiply;
+  opacity: 0.9;
+  rotate: var(--r);
+  animation: press 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes press {
+  from {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
+.hint {
+  position: absolute;
+  left: 22px;
+  bottom: 18px;
+  opacity: 0;
+  transition: opacity 0.6s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: 500 12.5px var(--f-text), serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--black);
+  pointer-events: none;
+}
+.hintStamp {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--orange);
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 9px var(--orange);
+  animation: bob 2.2s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+}
+.layer[data-hint] .hint {
+  opacity: 1;
+}
+@keyframes bob {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(-7px) scale(1.08);
+  }
+  40% {
+    transform: translateY(0) scale(0.92);
+  }
+}
+
+@media (max-width: 819px) {
+  .station {
+    flex-direction: column;
+    gap: 14px;
+    padding: 54px 18px 18px;
+    justify-content: flex-start;
+  }
+  .station[data-station="work-1"],
+  .station[data-station="work-3"] {
+    padding-top: 54px;
+  }
+  .station[data-station="work-1"] .poster,
+  .station[data-station="work-3"] .poster {
+    order: 0;
+  }
+  .poster {
+    height: auto;
+    width: min(64vw, 40svh);
+  }
+  .label {
+    width: 100%;
+    font-size: 15px;
+    line-height: 1.42;
+  }
+  .labelNo {
+    font-size: 11px;
+    padding-bottom: 6px;
+  }
+  .labelKind {
+    margin-top: 8px !important;
+    font-size: 11px;
+  }
+  .labelDesc {
+    margin-top: 6px !important;
+    font-size: 14.5px;
+  }
+  .labelStack {
+    margin-top: 8px !important;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .labelStack li::after {
+    margin: 0 6px;
+  }
+  .labelLink {
+    margin-top: 8px;
+    font-size: 13px;
+  }
+  .labelStatus {
+    margin-top: 8px !important;
+    font-size: 11px;
+  }
+  .contact {
+    padding: 50px 12px 150px;
+  }
+  .envelope {
+    width: 100%;
+    aspect-ratio: 0.72;
+    padding: 10px;
+    rotate: -1deg;
+  }
+  .envInner {
+    padding: 8cqw 6cqw 6cqw;
+  }
+  .envTitle {
+    margin-top: 3cqw !important;
+    font-size: 12cqw;
+    max-width: none;
+  }
+  .envEmail,
+  .envAlt,
+  .envFrom {
+    margin-left: 0 !important;
+  }
+  .envLines {
+    display: none;
+  }
+  .envEmail {
+    font-size: 7.6cqw;
+  }
+  .envFrom {
+    margin-top: 3cqw !important;
+  }
+  .postage {
+    width: 22cqw;
+    right: 7cqw;
+    top: 36cqw;
+    padding: 2cqw;
+  }
+  .postJ {
+    font-size: 12cqw;
+  }
+  .postVal {
+    font-size: 2.6cqw;
+  }
+  .postmark {
+    width: 34cqw;
+    height: 34cqw;
+    right: 22cqw;
+    top: 44cqw;
+  }
+  .hint {
+    left: 12px;
+    bottom: 10px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+  }
+  .stamp {
+    width: 96px;
+    height: 96px;
+    margin: -48px 0 0 -48px;
+  }
+  .wallNumeral {
+    font-size: 30vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp,
+  .hintStamp {
+    animation: none;
+  }
+}
