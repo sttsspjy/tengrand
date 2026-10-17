@@ -1189,8 +1189,14 @@
 .pressure {
   display: block;
   position: relative;
+  width: 70%;
   text-decoration: none;
   line-height: 0;
+}
+@media (max-width: 759px) {
+  .pressure {
+    width: 100%;
+  }
 }
 .pressureText {
   display: inline-block;
@@ -1200,7 +1206,7 @@
   line-height: 1.05;
   font-weight: 800;
   font-optical-sizing: auto;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.01em;
   padding-top: 0.3em;
   /* Room for the last glyph's ink past its tracked advance; included in the fit measurement. */
   padding-right: 0.1em;

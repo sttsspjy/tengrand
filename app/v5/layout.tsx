@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Archivo, Bricolage_Grotesque } from "next/font/google";
+import { Archivo, Big_Shoulders } from "next/font/google";
 import s from "./v5.module.css";
 
 const sans = Archivo({ subsets: ["latin"], axes: ["wdth"], variable: "--v5-sans", display: "swap" });
-const mail = Bricolage_Grotesque({ subsets: ["latin"], axes: ["opsz"], variable: "--v5-mail", display: "swap" });
+const mail = Big_Shoulders({ subsets: ["latin"], axes: ["opsz"], variable: "--v5-mail", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Jaeyoung | Monolith",
