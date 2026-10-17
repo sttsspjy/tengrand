@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { chapters, profile } from "@/content/profile";
-import PressureLink from "./PressureLink";
+import WaveLink from "./WaveLink";
 import s from "../v5.module.css";
 
 export default function Contact() {
@@ -30,7 +30,7 @@ export default function Contact() {
         </header>
 
         <div className={`${s.contactMailWrap} ${s.originBottom}`} data-plane data-ax="48" data-dz="200">
-          <PressureLink text={email} href={`mailto:${email}`} className={s.contactMail} />
+          <WaveLink text={email} href={`mailto:${email}`} className={s.contactMail} />
         </div>
 
         <div className={`${s.grid} ${s.contactRow}`}>

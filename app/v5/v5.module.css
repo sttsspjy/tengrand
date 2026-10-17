@@ -1195,18 +1195,19 @@
 .pressureText {
   display: inline-block;
   white-space: nowrap;
+  font-family: var(--v5-mail), var(--sans);
   font-size: 9vw;
   line-height: 1.05;
-  font-weight: 780;
-  font-variation-settings: "wdth" 100;
-  letter-spacing: -0.045em;
+  font-weight: 800;
+  font-optical-sizing: auto;
+  letter-spacing: -0.035em;
   padding-top: 0.3em;
   /* Room for the last glyph's ink past its tracked advance; included in the fit measurement. */
   padding-right: 0.1em;
 }
 .pressureCh {
   display: inline-block;
-  transform-origin: 50% 82%;
+  transform-origin: 50% 100%;
   will-change: transform;
 }
 .pressure::after {
