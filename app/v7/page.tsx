@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { profile, capabilities, projects, chapters } from "@/content/profile";
+import { RESTART_HREF } from "@/content/quiz";
 import { NOTES, entityByName } from "./_lib/kb";
 import { PopoverProvider, EntityLink } from "./_components/Popover";
 import Sidenote from "./_components/Sidenote";
@@ -8,6 +8,8 @@ import Director from "./_components/Director";
 import Act1 from "./_components/Act1";
 import Act2 from "./_components/Act2";
 import Act3 from "./_components/Act3";
+import Craft from "./_components/Craft";
+import Arrival from "./_components/Arrival";
 import GraphPlate from "./_components/GraphPlate";
 import JumpLink from "./_components/JumpLink";
 import HeroSeal from "./_components/HeroSeal";
@@ -50,6 +52,7 @@ function Para({ text, notes, first }: { text: string; notes: { n: (typeof NOTES)
 
 const CHAPTERS = [
   { to: "about", label: chapters.about, sw: "swPaper" },
+  { to: "craft", label: chapters.craft, sw: "swMarble" },
   { to: "skills", label: chapters.skills, sw: "swBlue" },
   { to: "projects", label: chapters.work, sw: "swRiso" },
   { to: "contact", label: chapters.contact, sw: "swAir" },
@@ -189,6 +192,7 @@ export default function CodexPage() {
             </section>
           </Act1>
 
+          <Craft />
           <Act2 />
           <Act3 />
         </main>
@@ -202,12 +206,13 @@ export default function CodexPage() {
               {chapters.intro} ↑
             </JumpLink>
           </p>
-          <Link href="/" className={b.restart}>
+          <a href={RESTART_HREF} className={b.restart}>
             {chapters.restart}
             <span aria-hidden> →</span>
-          </Link>
+          </a>
         </footer>
         <Director />
+        <Arrival />
       </div>
     </PopoverProvider>
   );

@@ -25,7 +25,7 @@ export function Core() {
   return (
     <div id="v5-core" className={s.transit} data-transit="core" aria-hidden="true">
       <div className={s.transitStick}>
-        <TransitHud from={[1, chapters.about]} to={[2, chapters.skills]} />
+        <TransitHud from={[2, chapters.craft]} to={[3, chapters.skills]} />
         <div className={s.tunnelWords}>
           {[0, 1, 2].map((i) => (
             <span key={i} data-tw={i} className={s.tunnelWord}>
@@ -34,7 +34,7 @@ export function Core() {
           ))}
         </div>
         <div className={s.actCard} data-ti>
-          <span className={s.actNum}>02</span>
+          <span className={s.actNum}>03</span>
           <span className={s.actName}>{chapters.skills}</span>
         </div>
       </div>
@@ -49,7 +49,7 @@ export function Shatter() {
   return (
     <div id="v5-shatter" className={s.transit} data-transit="shatter" aria-hidden="true">
       <div className={s.transitStick}>
-        <TransitHud from={[3, chapters.work]} to={[4, chapters.contact]} />
+        <TransitHud from={[4, chapters.work]} to={[5, chapters.contact]} />
         <div className={s.shatterWord} data-word="from">
           {FROM.map((c, i) => (
             <span key={i} data-sl={i} className={s.shatterCh}>

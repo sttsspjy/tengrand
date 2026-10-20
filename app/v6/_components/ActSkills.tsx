@@ -4,17 +4,18 @@ import { useRef } from "react";
 import { capabilities, chapters } from "@/content/profile";
 import { useRides } from "./useRides";
 import type { RideInfo, Ride } from "./rig";
-import { SEG, SHOTS } from "./timeline";
+import { SEG, SKILL_SX, CHAPTERS } from "./timeline";
 import styles from "../n2.module.css";
 
 const N = capabilities.length;
 const WORD = chapters.skills;
+const TOTAL = String(CHAPTERS.length).padStart(2, "0");
 const pad = (n: number) => String(n).padStart(2, "0");
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
-/** Salt noon: the Skills title hangs in the white, then one capability plate rides with the camera per
- *  monolith shot and is left standing in the salt when the camera moves on. */
-export default function ActSalt() {
+/** Above the storm: the Skills title hangs over the cloud sea, then one capability plate rides with
+ *  the camera per cloud shot and is left behind when the camera moves on. */
+export default function ActSkills() {
   const card = useRef<HTMLDivElement>(null);
   const plates = useRef<(HTMLElement | null)[]>([]);
 
@@ -28,10 +29,10 @@ export default function ActSalt() {
       let lastK = -1;
       out.push({
         el: c,
-        g0: 604,
-        g1: 676,
-        gin: 590,
-        gout: 716,
+        g0: SEG.SK_TITLE + 4,
+        g1: 1262,
+        gin: SEG.RIG_ABOVE + 2,
+        gout: SEG.SHOT0 + 14,
         sx: 0.5,
         sy: 0.5,
         ax: 0.5,
@@ -46,11 +47,11 @@ export default function ActSalt() {
             const off = j - (n - 1) / 2;
             const a = i.approach;
             const l = i.leave * i.leave;
-            const tx = off * (a * 34 + l * (60 + seeds[j][0] * 90));
-            const ty = l * (seeds[j][1] - 0.5) * 120;
-            const s = 1 + a * 0.35 + l * (1.6 + seeds[j][0] * 2.4);
+            const tx = off * (a * 30 + l * (60 + seeds[j][0] * 90));
+            const ty = l * (seeds[j][1] - 0.5) * 120 - a * 40;
+            const s = 1 + a * 0.3 + l * (1.6 + seeds[j][0] * 2.4);
             letters[j].style.transform = `translate3d(${tx.toFixed(1)}%, ${ty.toFixed(1)}%, 0) scale(${s.toFixed(3)})`;
-            letters[j].style.opacity = (1 - clamp01(l * (1.1 + seeds[j][1]))).toFixed(3);
+            letters[j].style.opacity = (1 - clamp01(l * (1.1 + seeds[j][1])) - a * 0.6).toFixed(3);
           }
         },
       });
@@ -58,7 +59,7 @@ export default function ActSalt() {
     plates.current.forEach((el, i) => {
       if (!el) return;
       const g0 = SEG.SHOT0 + i * SEG.SHOT_LEN + 28;
-      const left = SHOTS[i].sx[0] > 0.5;
+      const left = SKILL_SX[i] > 0.5;
       const rows = Array.from(el.querySelectorAll<HTMLElement>("[data-row]"));
       const last = rows.map(() => -1);
       out.push({
@@ -67,13 +68,13 @@ export default function ActSalt() {
         g1: g0 + 62,
         gin: g0 - 26,
         gout: g0 + 84,
-        sx: left ? 0.11 : 0.575,
-        sy: 0.2,
+        sx: left ? 0.075 : 0.58,
+        sy: 0.19,
         ax: 0,
         ay: 0,
         d: 6,
-        m: { sx: 0.055, sy: 0.4 },
-        swing: left ? -38 : 38,
+        m: { sx: 0.06, sy: 0.42 },
+        swing: left ? -36 : 36,
         drift: 0.05,
         rollK: 0.75,
         on: (inf: RideInfo) => {
@@ -92,17 +93,19 @@ export default function ActSalt() {
   });
 
   return (
-    <section id="instruments" className={styles.act} data-world="noon" aria-labelledby="instruments-title">
-      <div ref={card} className={`${styles.plane} ${styles.pSaltCard}`}>
-        <p className={styles.saltKicker}>
-          <span>03 / 05</span>
+    <section id="instruments" className={styles.act} data-world="clouds" data-poster="4" aria-labelledby="instruments-title">
+      <div ref={card} className={`${styles.plane} ${styles.pSkillCard}`}>
+        <p className={styles.label}>
+          <span>
+            04 <span className={styles.labelDim}>/ {TOTAL}</span>
+          </span>
           <span>
             01 — {pad(N)}
           </span>
         </p>
-        <h2 id="instruments-title" className={styles.saltWord} aria-label={WORD}>
+        <h2 id="instruments-title" className={styles.skillWord} aria-label={WORD}>
           {Array.from(WORD).map((ch, i) => (
-            <span key={i} data-l className={styles.saltLetter} aria-hidden="true">
+            <span key={i} data-l className={styles.skillLetter} aria-hidden="true">
               {ch}
             </span>
           ))}
@@ -115,6 +118,7 @@ export default function ActSalt() {
           ref={(n) => void (plates.current[i] = n)}
           className={`${styles.plane} ${styles.pPlate}`}
           aria-labelledby={`cap-${c.id}`}
+          data-focus-g={SEG.SHOT0 + i * SEG.SHOT_LEN + 60}
         >
           <p className={styles.plateMeta} aria-hidden="true">
             <span>

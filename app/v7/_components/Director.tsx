@@ -16,6 +16,7 @@ export default function Director() {
     const root = spacer.current!.closest<HTMLElement>("[data-codex]")!;
     const layers = {
       a1: root.querySelector<HTMLElement>('[data-layer="a1"]'),
+      cr: root.querySelector<HTMLElement>('[data-layer="cr"]'),
       a2: root.querySelector<HTMLElement>('[data-layer="a2"]'),
       a3: root.querySelector<HTMLElement>('[data-layer="a3"]'),
     };
@@ -33,7 +34,7 @@ export default function Director() {
     let act = "";
     let sec = "";
     let hashDone = false;
-    const vis = { a1: true, a2: false, a3: false } as Record<string, boolean>;
+    const vis = { a1: true, cr: false, a2: false, a3: false } as Record<string, boolean>;
 
     const layout = () => {
       dirty = false;
@@ -85,7 +86,9 @@ export default function Director() {
       current.y = y;
       const p1 = clamp01((y - L.t1.start) / L.t1.len);
       const p2 = clamp01((y - L.t2.start) / L.t2.len);
-      setVis("a1", y < L.t1.start + L.t1.len * 0.985);
+      // the manuscript hands over to Craft (and back for the plate) with short overlaps for the crossfades
+      setVis("a1", y < L.cr.start + 0.45 * vh || (y >= L.pl.start - 0.7 * vh && y < L.t1.start + L.t1.len * 0.985));
+      setVis("cr", y >= L.cr.start - 0.7 * vh && y < L.pl.start + 0.45 * vh);
       setVis("a2", y >= L.t1.start - 0.7 * vh && y < L.t2.start + L.t2.len);
       setVis("a3", y >= L.t2.start);
       const a = y < L.t1.start + L.t1.len * 0.55 ? "1" : y < L.t2.start + L.t2.len * 0.3 ? "2" : "3";
@@ -93,9 +96,18 @@ export default function Director() {
         act = a;
         root.dataset.act = a;
       }
-      // chapter for the HUD: the act number, or 4 once the contact station is near
+      // chapter for the HUD: 1 About · 2 Craft · 3 Skills (plate + Act II) · 4 Projects · 5 Contact
       const contactY = anchors.get("contact");
-      const sc = a === "3" && contactY != null && y >= contactY - 0.6 * vh ? "4" : a;
+      const sc =
+        a === "3"
+          ? contactY != null && y >= contactY - 0.6 * vh
+            ? "5"
+            : "4"
+          : a === "2" || y >= L.pl.start - 0.3 * vh
+            ? "3"
+            : y >= L.cr.start - 0.3 * vh
+              ? "2"
+              : "1";
       if (sc !== sec) {
         sec = sc;
         root.dataset.sec = sc;

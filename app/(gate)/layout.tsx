@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Literata, Schibsted_Grotesk } from "next/font/google";
+import { Bodoni_Moda, Hanken_Grotesk } from "next/font/google";
 import { intro } from "@/content/quiz";
 import s from "./gate.module.css";
 
-const display = Literata({
+const display = Bodoni_Moda({
   subsets: ["latin"],
   axes: ["opsz"],
   style: ["normal", "italic"],
   variable: "--g-display",
   display: "swap",
 });
-const text = Schibsted_Grotesk({ subsets: ["latin"], variable: "--g-text", display: "swap" });
+const text = Hanken_Grotesk({ subsets: ["latin"], variable: "--g-text", display: "swap" });
 
 export const metadata: Metadata = {
   title: `Jaeyoung | ${intro.title}`,

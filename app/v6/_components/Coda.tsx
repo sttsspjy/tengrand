@@ -1,16 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useRef, useState } from "react";
 import { profile, chapters } from "@/content/profile";
+import { RESTART_HREF } from "@/content/quiz";
 import DecryptedText from "./DecryptedText";
 import { useRides } from "./useRides";
-import { SEG } from "./timeline";
+import { SEG, CHAPTERS } from "./timeline";
 import styles from "../n2.module.css";
 
 const GH = profile.contact.github.replace(/^https?:\/\//, "");
+const TOTAL = String(CHAPTERS.length).padStart(2, "0");
 
-/** Coda, back on the night sea: the contact plate, then a closing credit roll and the link back to "/". */
+/** Coda at first light over the cloud sea: the contact plate, then a closing credit roll and the link
+ *  back to the questionnaire. */
 export function Signal() {
   const [copied, setCopied] = useState(false);
   const t = useRef(0);
@@ -22,8 +24,8 @@ export function Signal() {
       el: plate.current,
       g0: SEG.SIGNAL0,
       g1: SEG.SIGNAL0 + 72,
-      gin: SEG.SWAP3 - 5,
-      gout: SEG.SIGNAL0 + 110,
+      gin: SEG.SIGNAL0 - 50,
+      gout: SEG.SIGNAL0 + 112,
       sx: 0.085,
       sy: 0.2,
       ax: 0,
@@ -48,11 +50,11 @@ export function Signal() {
   };
 
   return (
-    <section id="signal" className={styles.act} data-world="night" aria-labelledby="signal-title">
+    <section id="signal" className={styles.act} data-world="dawn" data-poster="6" aria-labelledby="signal-title">
       <div ref={plate} className={`${styles.plane} ${styles.pSignal}`}>
         <p className={styles.label}>
           <span>
-            05 <span className={styles.labelDim}>/ 05</span>
+            06 <span className={styles.labelDim}>/ {TOTAL}</span>
           </span>
         </p>
         <h2 id="signal-title" className={styles.signalTitle}>
@@ -105,7 +107,7 @@ export function Credits() {
       gin: SEG.END - 95,
       gout: SEG.END + 60,
       sx: 0.5,
-      sy: 0.47,
+      sy: 0.34,
       ax: 0.5,
       ay: 0.5,
       d: 7,
@@ -128,7 +130,7 @@ export function Credits() {
   ]);
 
   return (
-    <footer className={styles.act} data-world="night">
+    <footer className={styles.act} data-world="dawn">
       <div ref={roll} className={`${styles.plane} ${styles.roll}`}>
         <p className={styles.rollName}>{profile.name}</p>
         <dl className={styles.rollList}>
@@ -158,7 +160,7 @@ export function Credits() {
         </span>
       </div>
       <div ref={fin} className={`${styles.plane} ${styles.fin}`}>
-        <Link href="/" className={styles.restart}>
+        <a href={RESTART_HREF} className={styles.restart}>
           <span aria-hidden="true" className={styles.restartArrow}>
             ←
           </span>
@@ -166,7 +168,7 @@ export function Credits() {
             {chapters.restart}
             <span className={styles.emailLine} aria-hidden="true" />
           </span>
-        </Link>
+        </a>
       </div>
     </footer>
   );

@@ -1,13 +1,13 @@
-/* ───────────── tokens (strictly monochrome) ───────────── */
+/* ───────────── tokens ───────────── */
 .root {
-  --bg: #111110;
-  --ink: #ebe8e1;
-  --dim: #8e8b84;
-  --faint: #55534f;
-  --rule: rgba(235, 232, 225, 0.15);
-  --g: clamp(18px, 2.2vw, 40px);
+  --bg: #0d0d0c;
+  --ink: #eeebe4;
+  --dim: #a29e96;
+  --faint: #67645e;
+  --rule: rgba(238, 235, 228, 0.16);
+  --g: clamp(18px, 2.4vw, 44px);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --display: var(--g-display), Georgia, serif;
+  --display: var(--g-display), "Didot", "Bodoni 72", Georgia, serif;
   --text: var(--g-text), "Helvetica Neue", Arial, sans-serif;
 
   background: var(--bg);
@@ -58,22 +58,38 @@
 }
 
 /* ───────────── layers ───────────── */
-.back {
+/* Static first paint: the corner of the room (two walls + floor) before WebGL is up. */
+.poster {
   position: fixed;
   inset: 0;
   z-index: 0;
-  display: grid;
-  place-items: center;
   pointer-events: none;
+  --cx: 62.5%;
+  --cy: 59.7%;
+  --a: 110deg;
+  --b: 250deg;
+  background:
+    radial-gradient(ellipse 60% 75% at var(--cx) 45%, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.6) 100%),
+    linear-gradient(var(--sd, 90deg), rgba(13, 13, 12, 0.85) 0%, rgba(13, 13, 12, 0) 45%),
+    conic-gradient(from 0deg at var(--cx) var(--cy), #2a1410 0deg var(--a), #0e1a19 var(--a) var(--b), #2a1f14 var(--b) 360deg);
 }
-.stage {
+.stageWrap {
   position: fixed;
   inset: 0;
   z-index: 1;
-  opacity: 0;
-  transition: opacity 1.6s ease;
 }
-.stage[data-ready] {
+.stage {
+  position: absolute;
+  inset: 0;
+}
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+.canvas[data-on] {
   opacity: 1;
 }
 .ui {
@@ -83,44 +99,36 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   padding: var(--g);
-  transition: opacity 0.5s ease;
+  transition: opacity 0.28s ease;
 }
-/* Keeps the text column legible where the sculpture drifts behind it. */
-.ui::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(17, 17, 16, 0.92) 0%, rgba(17, 17, 16, 0.78) 38%, rgba(17, 17, 16, 0) 62%);
-  transition: opacity 1s ease;
-}
-.page[data-step="result"] .ui::before {
-  opacity: 0;
-}
-/* Questions: the text column is fully shielded; the form lives in the right ~45%. */
-.page[data-step="question"] .ui::before {
-  background: linear-gradient(90deg, rgba(17, 17, 16, 0.97) 0%, rgba(17, 17, 16, 0.94) 47%, rgba(17, 17, 16, 0) 57%);
-}
-.page[data-step="question"] .step {
-  width: min(46vw, 780px);
-}
-.back {
-  transition: opacity 0.5s ease;
-}
-.page[data-leaving] .back,
 .page[data-leaving] .ui {
   opacity: 0;
   pointer-events: none;
 }
-.flood {
+.blades {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  display: flex;
+  pointer-events: none;
+  overflow: hidden;
+}
+.blades span {
+  flex: 1 1 0;
+  height: 100%;
+  margin-right: -1px;
+  background: #ff2a00;
+  transform: translateY(-101%);
+}
+.cover {
   position: fixed;
   inset: 0;
   z-index: 50;
   visibility: hidden;
+  opacity: 0;
   pointer-events: none;
 }
-.page[data-leaving] .flood {
+.page[data-leaving] .cover {
   pointer-events: auto;
 }
 
@@ -135,18 +143,44 @@
 .name {
   font-family: var(--display);
   font-style: italic;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 .progress {
-  font-size: 0.95rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--dim);
+  font-family: var(--display);
+  font-size: 1.3rem;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--faint);
+}
+.progNow {
+  color: var(--ink);
+}
+.progSep {
+  white-space: pre;
 }
 .hint {
-  font-size: 0.88rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--faint);
+}
+.key {
+  display: flex;
+  gap: 1.6rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.key b {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0;
+  color: var(--dim);
+  margin-right: 0.3em;
 }
 
 .main {
@@ -155,7 +189,7 @@
   min-width: 0;
 }
 .step {
-  width: min(52vw, 860px);
+  width: min(44vw, 760px);
   padding-block: clamp(1.5rem, 5vh, 4rem);
 }
 
@@ -164,8 +198,8 @@
   display: inline-block;
   overflow: hidden;
   vertical-align: top;
-  padding-bottom: 0.1em;
-  margin-bottom: -0.1em;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
 }
 .w {
   display: inline-block;
@@ -176,24 +210,28 @@
 .title {
   font-family: var(--display);
   font-weight: 400;
-  font-size: clamp(3.2rem, min(8.2vw, 15.5vh), 9.4rem);
-  line-height: 0.94;
-  letter-spacing: -0.025em;
-  margin-bottom: 0.42em;
+  font-size: clamp(3.4rem, min(7.6vw, 15vh), 9.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.4em;
   text-wrap: balance;
+  font-variation-settings: "opsz" 96;
+}
+.titleItal {
+  font-style: italic;
 }
 .lede {
-  font-size: clamp(1rem, 1.2vw, 1.2rem);
-  line-height: 1.5;
+  font-size: clamp(1rem, 1.15vw, 1.18rem);
+  line-height: 1.55;
   color: var(--dim);
-  max-width: 36ch;
+  max-width: 34ch;
 }
 .actions {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 1.2rem 2.6rem;
-  margin-top: clamp(1.8rem, 5vh, 3rem);
+  gap: 1.2rem 2.8rem;
+  margin-top: clamp(1.8rem, 5vh, 3.2rem);
 }
 .cssWord {
   animation: wordUp 1.3s var(--ease) both;
@@ -203,13 +241,13 @@
 }
 @keyframes wordUp {
   from {
-    transform: translateY(108%);
+    transform: translateY(110%);
   }
 }
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(14px);
   }
 }
 
@@ -225,9 +263,10 @@
 .big {
   font-family: var(--display);
   font-style: italic;
-  font-size: clamp(2.2rem, 3.3vw, 3.3rem);
+  font-size: clamp(2.3rem, 3.4vw, 3.5rem);
   line-height: 1.05;
   letter-spacing: -0.01em;
+  font-variation-settings: "opsz" 72;
 }
 .small {
   font-size: 0.95rem;
@@ -247,30 +286,37 @@
   transition: transform 0.8s var(--ease);
 }
 .big::after {
-  transform: scaleX(0.32);
+  transform: scaleX(0.3);
 }
 .small::after {
   opacity: 0.45;
 }
-.big:hover::after,
 .big:focus-visible::after {
   transform: scaleX(1);
 }
-.small:hover,
 .small:focus-visible {
   color: var(--ink);
+}
+@media (hover: hover) {
+  .big:hover::after {
+    transform: scaleX(1);
+  }
+  .small:hover {
+    color: var(--ink);
+  }
 }
 
 /* ───────────── questions ───────────── */
 .question {
   font-family: var(--display);
   font-weight: 400;
-  font-size: clamp(2rem, min(3.7vw, 6.8vh), 4.3rem);
-  line-height: 1.06;
-  letter-spacing: -0.018em;
+  font-size: clamp(2rem, min(3.5vw, 6.6vh), 4.1rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
   margin-bottom: clamp(1.6rem, 4.5vh, 3.2rem);
   text-wrap: pretty;
   outline: none;
+  font-variation-settings: "opsz" 72;
 }
 .answers {
   border-top: 1px solid var(--rule);
@@ -278,16 +324,16 @@
 .answer {
   position: relative;
   display: grid;
-  grid-template-columns: 2.2em 1fr;
+  grid-template-columns: 2.4em 1fr;
   align-items: baseline;
   width: 100%;
   min-height: 52px;
-  padding: clamp(0.8rem, 2vh, 1.25rem) 0;
+  padding: clamp(0.85rem, 2.1vh, 1.3rem) 0;
   background: none;
   border: 0;
   text-align: left;
-  font-size: clamp(1.05rem, 1.42vw, 1.5rem);
-  line-height: 1.3;
+  font-size: clamp(1.05rem, 1.35vw, 1.42rem);
+  line-height: 1.32;
   color: var(--dim);
   transition: color 0.5s ease, opacity 0.5s ease;
 }
@@ -311,7 +357,7 @@
 .num {
   font-family: var(--display);
   font-style: italic;
-  font-size: 1.15em;
+  font-size: 1.2em;
   color: var(--faint);
   transition: color 0.5s ease;
 }
@@ -319,25 +365,33 @@
   display: inline-block;
   transition: transform 0.7s var(--ease);
 }
-.answer:hover,
 .answer:focus-visible,
 .answer[data-sel] {
   color: var(--ink);
 }
-.answer:hover .num,
 .answer:focus-visible .num,
 .answer[data-sel] .num {
   color: var(--ink);
 }
-.answer:hover .text,
 .answer:focus-visible .text,
 .answer[data-sel] .text {
   transform: translateX(0.35em);
 }
-.answer:hover::before,
 .answer:focus-visible::before,
 .answer[data-sel]::before {
   transform: scaleX(1);
+}
+@media (hover: hover) {
+  .answer:hover,
+  .answer:hover .num {
+    color: var(--ink);
+  }
+  .answer:hover .text {
+    transform: translateX(0.35em);
+  }
+  .answer:hover::before {
+    transform: scaleX(1);
+  }
 }
 .answer:focus-visible {
   outline: 1px solid var(--ink);
@@ -348,73 +402,93 @@
 }
 
 /* ───────────── result ───────────── */
-.value {
-  display: inline-block;
-  white-space: nowrap;
-  font-family: var(--display);
-  font-weight: 400;
-  line-height: 0.86;
-  letter-spacing: -0.035em;
-  color: #d8d5ce;
-  font-size: 18vw;
-}
-.back[data-world="nocturne"] .value {
-  transform: translateY(-9vh);
-}
-.vm {
-  display: inline-block;
-  overflow: hidden;
-  vertical-align: top;
-  padding: 0.04em 0 0.12em;
-  margin: -0.04em 0 -0.12em;
+.page[data-step="result"] .main {
+  align-items: flex-end;
 }
 .result {
   width: 100%;
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 2rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 1.5rem 4rem;
+  padding-bottom: 1.6rem;
+}
+.resultSide {
+  max-width: 30rem;
+  padding-bottom: 1.2em;
 }
 .resultHead {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
+  flex-direction: column;
+  align-items: flex-start;
   outline: none;
   font-weight: 400;
 }
 .label {
   display: inline-block;
-  font-size: 0.95rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--dim);
+  margin-bottom: 0.9rem;
 }
 .worldName {
-  display: inline-block;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.6rem;
   font-family: var(--display);
   font-style: italic;
-  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-size: clamp(1.5rem, 2vw, 2.1rem);
   line-height: 1;
 }
-.resultFoot {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 1.6rem 3rem;
+.letter {
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.8em;
+  color: var(--accent, var(--ink));
+}
+.page[data-world="monolith"] {
+  --accent: #ff4a24;
+}
+.page[data-world="nocturne"] {
+  --accent: #ffb46a;
+}
+.page[data-world="codex"] {
+  --accent: #33b5b4;
+}
+.value {
+  display: block;
+  white-space: nowrap;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(4.6rem, min(11vw, 22vh), 13.5rem);
+  line-height: 0.86;
+  letter-spacing: -0.045em;
+  margin: 0.1em 0 0 -0.05em;
+  font-variation-settings: "opsz" 96;
+}
+.vm {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: 0.04em 0 0.14em;
+  margin: -0.04em 0 -0.14em;
 }
 .line {
   font-family: var(--display);
-  font-size: clamp(1.4rem, 2.1vw, 2.2rem);
-  line-height: 1.15;
+  font-size: clamp(1.25rem, 1.7vw, 1.8rem);
+  line-height: 1.22;
   letter-spacing: -0.01em;
-  max-width: 22ch;
+  max-width: 24ch;
+  color: var(--dim);
+  font-variation-settings: "opsz" 36;
 }
 .resultActions {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 1rem 2.6rem;
+  margin-top: clamp(1.6rem, 4.5vh, 2.8rem);
 }
 .others {
   font-size: 0.95rem;
@@ -435,16 +509,10 @@
 
 /* ───────────── phones ───────────── */
 @media (max-width: 760px) {
-  .ui::before,
-  .page[data-step="question"] .ui::before {
-    background: linear-gradient(0deg, rgba(17, 17, 16, 0.97) 0%, rgba(17, 17, 16, 0.94) 50%, rgba(17, 17, 16, 0) 62%);
-  }
-  .page[data-step="question"] .step {
-    width: 100%;
-  }
-  .page[data-step="result"] .ui::before {
-    opacity: 1;
-    background: linear-gradient(0deg, rgba(17, 17, 16, 0.9) 0%, rgba(17, 17, 16, 0.7) 26%, rgba(17, 17, 16, 0) 44%);
+  .poster {
+    --cx: 50%;
+    --cy: 37.3%;
+    --sd: 0deg;
   }
   .main {
     align-items: flex-end;
@@ -454,25 +522,35 @@
     padding-block: 1.5rem 1.25rem;
   }
   .title {
-    font-size: clamp(2.9rem, 14vw, 4.2rem);
+    font-size: clamp(3rem, 14.5vw, 4.4rem);
   }
   .question {
-    font-size: clamp(1.55rem, 7vw, 2.2rem);
-    line-height: 1.1;
+    font-size: clamp(1.5rem, 6.8vw, 2.1rem);
+    line-height: 1.12;
   }
   .answer {
-    font-size: 1.04rem;
-    padding: 0.9rem 0;
+    font-size: 1.02rem;
+    padding: 0.85rem 0;
+  }
+  .value {
+    font-size: clamp(3.4rem, 19vw, 5.4rem);
   }
   .result {
-    justify-content: space-between;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
   }
-  .resultFoot {
-    flex-direction: column;
-    align-items: flex-start;
+  .resultSide {
+    padding-bottom: 0;
   }
   .big {
     font-size: 2.4rem;
+  }
+  .key {
+    gap: 1rem;
+    font-size: 0.7rem;
+  }
+  .hint {
+    display: none;
   }
 }
 

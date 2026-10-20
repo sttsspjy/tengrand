@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { onTitle } from "./director";
 import styles from "../n2.module.css";
 
 const POOL = "abcdefghijklmnopqrstuvwxyz0123456789*/";
@@ -34,6 +35,7 @@ export default function DecryptedText({ text, className, delay = 0, speed = 55, 
     const revealed = new Array<boolean>(n).fill(delay === null);
     let timer = 0;
     let startT = 0;
+    let unTitle = () => {};
 
     const pick = () => POOL[(Math.random() * POOL.length) | 0];
     const paint = (queuePos: number) => {
@@ -72,7 +74,9 @@ export default function DecryptedText({ text, className, delay = 0, speed = 55, 
     } else if (delay !== null) {
       for (let i = 0; i < n; i++) revealed[i] = false;
       paint(-LEAD);
-      startT = window.setTimeout(() => run(0), delay);
+      unTitle = onTitle(() => {
+        startT = window.setTimeout(() => run(0), delay);
+      });
     } else paint(n);
 
     // hover: brief scramble that resolves left to right
@@ -99,6 +103,7 @@ export default function DecryptedText({ text, className, delay = 0, speed = 55, 
     return () => {
       window.clearInterval(timer);
       window.clearTimeout(startT);
+      unTitle();
       host.removeEventListener("pointerenter", onEnter);
       host.removeEventListener("focus", onEnter);
     };

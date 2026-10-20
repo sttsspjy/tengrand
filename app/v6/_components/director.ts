@@ -16,6 +16,30 @@ export type FrameInfo = {
 type Tick = (f: FrameInfo) => void;
 type Entry = { fn: Tick; order: number };
 
+/** WebGL world status: ready once the program is linked and uniforms are bound. */
+export const worldState = { ready: false, failed: false };
+
+// Title gate: intro text effects wait until the opening (normal intro or the arrival) releases them.
+let titleAt = 0;
+const titleWaiters = new Set<() => void>();
+export function releaseTitle() {
+  if (titleAt) return;
+  titleAt = performance.now();
+  titleWaiters.forEach((f) => f());
+  titleWaiters.clear();
+}
+/** Runs fn once the title is released (immediately if it already was). Returns a cancel. */
+export function onTitle(fn: () => void): () => void {
+  if (titleAt) {
+    fn();
+    return () => {};
+  }
+  titleWaiters.add(fn);
+  return () => {
+    titleWaiters.delete(fn);
+  };
+}
+
 const ticks: Entry[] = [];
 const resizers = new Set<() => void>();
 
@@ -162,6 +186,7 @@ export function startDirector(): () => void {
     director.lenis?.destroy();
     director.lenis = null;
     director.started = false;
+    titleAt = 0;
     probe?.remove();
     probe = null;
     lastW = 0;

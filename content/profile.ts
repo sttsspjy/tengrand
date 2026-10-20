@@ -24,11 +24,35 @@ export const profile = {
 export const chapters = {
   intro: "Intro",
   about: "About",
+  craft: "Craft",
   skills: "Skills",
   work: "Projects",
   contact: "Contact",
   restart: "Back to the start",
 } as const;
+
+export type Phrase = {
+  id: "alive" | "motion" | "louder";
+  before: string; // text before the accent word
+  accent: string; // the emphasised word
+  after: string; // text after the accent word ("" if none)
+  sub: string; // supporting line; "" if none
+  hint: string; // interaction hint shown with the slide; "" if none
+};
+
+// The three Craft slides, in order. Every world stages all three, each in its own scene.
+export const craft: Phrase[] = [
+  { id: "alive", before: "Interactions that feel", accent: "alive.", after: "", sub: "", hint: "Hover anywhere" },
+  { id: "motion", before: "Motion is the", accent: "message.", after: "", sub: "Together, we breathe.", hint: "" },
+  {
+    id: "louder",
+    before: "Designs that",
+    accent: "speak",
+    after: "louder than words.",
+    sub: "Built with precision. Felt with intention.",
+    hint: "",
+  },
+];
 
 export type Capability = {
   id: string;

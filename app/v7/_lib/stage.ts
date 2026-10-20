@@ -1,9 +1,10 @@
 // Shared timeline registry. The page is one fixed stage; scrollY is a timeline split into parts:
-// a1 (Act I) · t1 (dive) · a2 (Act II) · t2 (press) · a3 (Act III). Parts register a measure()
-// that returns their length in px plus anchor offsets, and an update() called once per frame.
+// a1 (Act I: hero, about) · cr (Craft) · pl (Act I: graph plate) · t1 (dive) · a2 (Act II) · t2 (press) ·
+// a3 (Act III: library). Parts register a measure() that returns their length in px plus anchor offsets
+// (relative to the part's start), and an update() called once per frame.
 
-export type PartId = "a1" | "t1" | "a2" | "t2" | "a3";
-export const ORDER: PartId[] = ["a1", "t1", "a2", "t2", "a3"];
+export type PartId = "a1" | "cr" | "pl" | "t1" | "a2" | "t2" | "a3";
+export const ORDER: PartId[] = ["a1", "cr", "pl", "t1", "a2", "t2", "a3"];
 
 export type Span = { start: number; len: number };
 export type Layout = Record<PartId, Span>;

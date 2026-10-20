@@ -9,17 +9,25 @@ import styles from "../n2.module.css";
 const WORLD = "Nocturne";
 
 const HINTS = [
-  ["Click the water", "Drag to look"],
-  ["Drag to move the sun", "Click a monolith"],
-  ["Hover a print to develop", "Drag a print to swing"],
-  ["Click the water", "Drag to look"],
+  ["Click a window", "Drag to look"],
+  ["Move over the city", "Drag to look"],
+  ["Hold to breathe in", "Drag to look"],
+  ["Click to strike", "Drag to look"],
+  ["Click a cloud", "Drag to look"],
+  ["Hover a constellation", "Drag to look"],
+  ["Drag to look", ""],
 ];
 const HINTS_TOUCH = [
-  ["Tap the water", "Swipe to look"],
-  ["Swipe to move the sun", "Tap a monolith"],
-  ["Tap a print to develop", "Tap the tray"],
-  ["Tap the water", "Swipe to look"],
+  ["Tap a window", "Swipe to look"],
+  ["Tap the city", "Swipe to look"],
+  ["Hold to breathe in", "Swipe to look"],
+  ["Tap to strike", "Swipe to look"],
+  ["Tap a cloud", "Swipe to look"],
+  ["Tap a constellation", "Swipe to look"],
+  ["Swipe to look", ""],
 ];
+// act boundaries shown as cuts on the scrub bar
+const CUTS = [625, 808, 1000, 1200, 1945, 2690];
 
 /** Fixed chrome: header with world + current chapter, chapter rail, scrub bar, per-act hint, letterbox intro. */
 export default function Chrome() {
@@ -64,7 +72,7 @@ export default function Chrome() {
       const g = f.g;
       const wantHint =
         !director.reduced &&
-        ((g > 10 && g < 440) || (g > SEG.SHOT0 + 20 && g < SEG.T2a) || (g > SEG.PRINT0 && g < SEG.T3a) || (g > SEG.SIGNAL0 && g < SEG.END - 80) || g < 2);
+        ((g > 10 && g < 520) || (g > SEG.D0 && g < SEG.D1) || (g > SEG.E0 && g < SEG.E1) || (g > SEG.F0 && g < SEG.F1) || (g > SEG.SHOT0 + 20 && g < SEG.PROJ) || (g > SEG.CON0 && g < SEG.DAWN0) || (g > SEG.SIGNAL0 && g < SEG.END - 80) || g < 2);
       if (wantHint !== hintOn && hint.current) {
         hintOn = wantHint;
         hint.current.toggleAttribute("data-on", wantHint);
@@ -76,7 +84,7 @@ export default function Chrome() {
 
   return (
     <>
-      <div className={styles.letterbox} aria-hidden="true">
+      <div className={styles.letterbox} aria-hidden="true" data-letterbox="">
         <span className={styles.lbTop} />
         <span className={styles.lbBottom} />
         <span className={styles.lbCard}>
@@ -129,7 +137,7 @@ export default function Chrome() {
                 <i>{c.n}</i>
               </span>
             ))}
-            {[SEG.SWAP1, 1420, SEG.SWAP3].map((g) => (
+            {CUTS.map((g) => (
               <span key={g} className={styles.scrubCut} style={{ left: `${((g / SEG.END) * 100).toFixed(2)}%` }} />
             ))}
           </span>
@@ -138,9 +146,9 @@ export default function Chrome() {
       </div>
 
       <div ref={hint} className={styles.hint} aria-hidden="true" data-on="">
-        <span ref={hintA}>Click the water</span>
+        <span ref={hintA}>{HINTS[0][0]}</span>
         <span ref={hintB} className={styles.hintDim}>
-          Drag to look
+          {HINTS[0][1]}
         </span>
       </div>
     </>
@@ -150,14 +158,9 @@ export default function Chrome() {
 /** Reduced motion: act from the section nearest the viewport centre. */
 function actFromSections(_g: number) {
   const mid = window.innerHeight / 2;
-  const order = ["night", "noon", "dark", "coda"];
   let found = 0;
-  document.querySelectorAll<HTMLElement>("[data-world]").forEach((el) => {
-    const r = el.getBoundingClientRect();
-    if (r.top <= mid) {
-      const k = el.dataset.world === "night" && el.id === "signal" ? 3 : order.indexOf(el.dataset.world ?? "night");
-      if (k >= 0) found = Math.max(found, k);
-    }
+  document.querySelectorAll<HTMLElement>("[data-poster]").forEach((el) => {
+    if (el.getBoundingClientRect().top <= mid) found = Math.max(found, Number(el.dataset.poster) || 0);
   });
   return found;
 }

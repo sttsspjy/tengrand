@@ -79,37 +79,6 @@ export function rayAt(p: Pose, sx: number, sy: number, vw: number, vh: number, o
   return out;
 }
 
-/** Ray vs y=0 plane. Returns [x, z] or null. */
-export function hitGround(p: Pose, d: number[]): [number, number] | null {
-  if (d[1] >= -1e-4) return null;
-  const t = -p.y / d[1];
-  return [p.x + d[0] * t, p.z + d[2] * t];
-}
-
-/** Ray vs a y-rotated box standing on y=0 (x, z, rot, H; proportions 4:9:1). Returns t or -1. */
-export function hitSlab(o: number[], d: number[], s: number[]): number {
-  const c = Math.cos(s[2]),
-    sn = Math.sin(s[2]);
-  const H = s[3];
-  const ox = o[0] - s[0],
-    oy = o[1] - H * 0.5,
-    oz = o[2] - s[1];
-  const lo = [c * ox - sn * oz, oy, sn * ox + c * oz];
-  const ld = [c * d[0] - sn * d[2], d[1], sn * d[0] + c * d[2]];
-  const hs = [H * 0.2222, H * 0.5, H * 0.0556];
-  let tn = -Infinity,
-    tf = Infinity;
-  for (let i = 0; i < 3; i++) {
-    const dd = Math.abs(ld[i]) < 1e-6 ? 1e-6 : ld[i];
-    const t1 = (-hs[i] - lo[i]) / dd,
-      t2 = (hs[i] - lo[i]) / dd;
-    tn = Math.max(tn, Math.min(t1, t2));
-    tf = Math.min(tf, Math.max(t1, t2));
-  }
-  if (tn > tf || tf < 0) return -1;
-  return tn;
-}
-
 /* ---------- keyframe tracks: monotone cubic Hermite (no overshoot, dwell at extrema) ---------- */
 
 export type Track = { g: number[]; v: number[][]; m: number[][]; n: number };

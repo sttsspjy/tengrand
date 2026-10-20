@@ -102,7 +102,7 @@ export default function Work() {
   return (
     <section tabIndex={-1} id="v5-work" ref={root} className={`${s.act2} ${s.work}`} aria-labelledby="v5-work-h">
       <header className={`${s.grid} ${s.secHead} ${s.workHead}`}>
-        <span className={s.label}>(03)</span>
+        <span className={s.label}>(04)</span>
         <h2 id="v5-work-h" className={s.secTitle}>
           {chapters.work}
         </h2>

@@ -23,7 +23,8 @@ Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Tailwind v4 (`@i
 app/(gate)/           # `/`: AI-ethics questionnaire; the result routes the visitor to one world
 app/v5 · v6 · v7      # the three worlds: Monolith · Nocturne · Codex. Each self-contained: layout.tsx (fonts) · page.tsx · _components/ · *.module.css
 content/profile.ts    # ALL portfolio copy: profile, chapter names, capabilities, projects. Edit text only here.
-content/quiz.ts       # questionnaire copy, world mapping and scoring
+content/quiz.ts       # questionnaire copy, world mapping and scoring, WORLD_COOKIE / RESTART_HREF
+proxy.ts              # serves the chosen world at "/" from the tg_world cookie; /restart clears it; typed /vN redirects to "/" in production
 public/vN/            # sample-specific assets
 scripts/shot.mjs      # headless Edge probe: screenshots down the page, console errors, FPS, GPU
 screenshots/          # user's reference sites (taste reference, not to copy)
@@ -54,7 +55,7 @@ Target hardware: modern laptop chips (Apple M-series, recent Intel/AMD iGPU) and
 
 ## Verify
 
-1. `npm run dev` (port 3000). Each sample at `/vN`.
+1. `npm run dev` (port 3000). Each sample at `/vN` (direct world paths work in development only). Append `?entry` to play the gate-to-world arrival.
 2. `node scripts/shot.mjs /vN <outDir> [--mobile]`. Then read the PNGs and JSON (fps, worstMs, errors, gpu).
 3. `npm run typecheck`.
 

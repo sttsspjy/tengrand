@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { chapters, profile } from "@/content/profile";
+import { RESTART_HREF } from "@/content/quiz";
 import BreatheLink from "./BreatheLink";
 import s from "../v5.module.css";
 
@@ -23,7 +23,7 @@ export default function Contact() {
   return (
     <section tabIndex={-1} id="v5-contact" className={`${s.act3} ${s.section} ${s.contact}`} aria-labelledby="v5-contact-h">
         <header className={`${s.grid} ${s.secHead}`} data-plane data-ax="-24" data-ay="-20" data-dz="300">
-          <span className={s.label}>(04)</span>
+          <span className={s.label}>(05)</span>
           <h2 id="v5-contact-h" className={s.secTitle}>
             {chapters.contact}
           </h2>
@@ -58,12 +58,12 @@ export function Footer() {
         © {profile.year} {profile.name}
       </span>
       <span className={`${s.footSmall} ${s.footMid}`}>{profile.role}</span>
-      <Link href="/" className={s.restart}>
+      <a href={RESTART_HREF} className={s.restart}>
         <span className={s.restartText}>{chapters.restart}</span>
         <span className={s.restartArrow} aria-hidden="true">
           ↖
         </span>
-      </Link>
+      </a>
     </footer>
   );
 }

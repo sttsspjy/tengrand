@@ -1,72 +1,124 @@
-// Visitor toys on the world layer: click/tap drops ripples (night sea, developer bath), drag looks
-// around with a spring return, in Act II drag moves the sun and clicking a monolith hard-cuts to its shot.
+// Visitor input on the world layer. Drag looks around (spring return) everywhere; per act:
+// city — click lights the windows around the hit; alive — the pointer (or an idle wave on touch)
+// switches windows on as it passes; lanterns — press and hold to breathe in; storm — click strikes
+// lightning; clouds — click a cloud to cut to its shot; stars — hover / click a constellation.
 
-import { director, scrollToG } from "./director";
-import { W, live, addRipple, SLABS, SEG, DARK } from "./timeline";
-import { rayAt, hitGround, hitSlab } from "./camera";
+import { director, scrollToG, onFrame } from "./director";
+import { W, live, addTrail, strike, SEG, SKILL_SUBJ, SKY_C, word, frameAt } from "./timeline";
+import { rayAt, project } from "./camera";
+import { traceCity } from "./city";
+import { CONST, dirOf } from "./constellations";
 
 const ray = [0, 0, 0];
 const org = [0, 0, 0];
+const scr = { x: 0, y: 0, d: 0 };
+const dir = [0, 0, 0];
 
-/** Index of the monolith under a screen point in the current camera, or -1. */
-export function pickSlab(sx: number, sy: number): number {
+/** City hit under a screen point (city frame), or null. */
+function cityHit(sx: number, sy: number) {
   const c = W.cam;
   rayAt(c, sx, sy, director.vw, director.vh, ray);
   org[0] = c.x;
   org[1] = c.y;
   org[2] = c.z;
-  let best = 1e9,
+  return traceCity(org, ray, word());
+}
+
+/** Skill shot whose subject is nearest a screen point (within reach), or -1. */
+function pickCloud(sx: number, sy: number) {
+  let best = 140,
     id = -1;
-  for (let i = 0; i < SLABS.length; i++) {
-    const t = hitSlab(org, ray, SLABS[i]);
-    if (t > 0 && t < best) {
-      best = t;
+  for (let i = 0; i < SKILL_SUBJ.length; i++) {
+    const c = SKILL_SUBJ[i];
+    project(W.cam, c[0], c[1], c[2], director.vw, director.vh, scr);
+    if (scr.d <= 0) continue;
+    const d = Math.hypot(scr.x - sx, scr.y - sy);
+    if (d < best) {
+      best = d;
       id = i;
     }
   }
   return id;
 }
 
-/** Hard cut to a capability shot (shot i frames monolith i). */
-export function cutToShot(i: number) {
-  scrollToG(SEG.SHOT0 + i * SEG.SHOT_LEN + 52, { immediate: true });
-  live.cut = 1;
+/** Constellation under a screen point, or -1. */
+function pickConstellation(sx: number, sy: number) {
+  const c = W.cam;
+  for (let k = 0; k < CONST.length; k++) {
+    dirOf(CONST[k].az, CONST[k].el, dir);
+    project(c, SKY_C[0] + dir[0] * 100, SKY_C[1] + dir[1] * 100, SKY_C[2] + dir[2] * 100, director.vw, director.vh, scr);
+    if (scr.d <= 0) continue;
+    const r = CONST[k].scale * 1.05 * c.F * director.vh;
+    if (Math.hypot(scr.x - sx, scr.y - sy) < r) return k;
+  }
+  return -1;
 }
 
-const isUI = (t: EventTarget | null) => t instanceof Element && !!t.closest("a,button,input,textarea,select,[data-print],[data-ui]");
+const isUI = (t: EventTarget | null) => t instanceof Element && !!t.closest("a,button,input,textarea,select,[data-ui]");
 
 export function startInteract(stage: HTMLElement): () => void {
   type Down = { id: number; x: number; y: number; lx: number; lt: number; vx: number; vy: number; ly: number; moved: boolean; yaw: number; pitch: number };
   let down: Down | null = null;
   let hoverQueued = false;
   let hx = 0,
-    hy = 0;
+    hy = 0,
+    lastTx = -1e4,
+    lastTy = -1e4,
+    lastTt = 0;
+  const touch = window.matchMedia("(hover: none)").matches;
 
   const setCursor = (c: string) => {
     if (stage.dataset.cursor !== c) stage.dataset.cursor = c;
   };
   const restCursor = () => {
-    if (W.act === 1) setCursor(live.hoverSlab >= 0 ? "pick" : "sun");
-    else setCursor("water");
+    const a = W.act;
+    if (a === 5) setCursor(live.hoverCon >= 0 ? "pick" : "look");
+    else if (a === 0 || a === 1 || a === 3) setCursor("light");
+    else setCursor("look");
   };
 
   const click = (x: number, y: number) => {
-    const act = W.act;
-    if (act === 1) {
-      const id = pickSlab(x, y);
-      if (id >= 0) cutToShot(id);
-      else live.sunV += (x < director.vw / 2 ? -1 : 1) * 1.2;
+    const a = W.act;
+    const g = director.g;
+    if (frameAt(g) === 0 && (a === 0 || a === 1)) {
+      const h = cityHit(x, y);
+      if (h) addTrail(h[0], h[2], a === 1 ? 1.4 : 0.9);
       return;
     }
-    rayAt(W.cam, x, y, director.vw, director.vh, ray);
-    const h = hitGround(W.cam, ray);
-    if (!h) return;
-    if (act === 2) {
-      if (h[1] < DARK.RIMZ) {
-        addRipple(h[0], h[1], 1.3, 2);
-        live.agitate = Math.min(2.2, live.agitate + 0.9);
+    if (a === 3) {
+      strike(1);
+      return;
+    }
+    if (a === 4) {
+      const i = pickCloud(x, y);
+      if (i >= 0) scrollToG(SEG.SHOT0 + i * SEG.SHOT_LEN + 56, { duration: 1.8 });
+      return;
+    }
+    if (a === 5) {
+      const k = pickConstellation(x, y);
+      if (k >= 0) scrollToG(SEG.CON0 + k * SEG.CON_LEN + 100, { duration: 2.2 });
+    }
+  };
+
+  const hover = () => {
+    hoverQueued = false;
+    const a = W.act;
+    const overUI = isUI(document.elementFromPoint(hx, hy));
+    if (a === 1 && !overUI && frameAt(director.g) === 0) {
+      const now = performance.now();
+      if (Math.hypot(hx - lastTx, hy - lastTy) > 36 || now - lastTt > 260) {
+        const h = cityHit(hx, hy);
+        if (h) {
+          addTrail(h[0], h[2], 0.5);
+          lastTx = hx;
+          lastTy = hy;
+          lastTt = now;
+        }
       }
-    } else addRipple(h[0], h[1], 1, act);
+    }
+    if (a === 5) live.hoverCon = overUI && live.hoverCon >= 0 ? live.hoverCon : pickConstellation(hx, hy);
+    else if (live.hoverCon >= 0 && a !== 5) live.hoverCon = -1;
+    restCursor();
   };
 
   const onDown = (e: PointerEvent) => {
@@ -85,6 +137,7 @@ export function startInteract(stage: HTMLElement): () => void {
       yaw: live.lookYaw,
       pitch: live.lookPitch,
     };
+    if (W.act === 2) live.holding = true;
   };
 
   const onMove = (e: PointerEvent) => {
@@ -93,11 +146,7 @@ export function startInteract(stage: HTMLElement): () => void {
       hy = e.clientY;
       if (!hoverQueued) {
         hoverQueued = true;
-        requestAnimationFrame(() => {
-          hoverQueued = false;
-          live.hoverSlab = W.act === 1 && !isUI(document.elementFromPoint(hx, hy)) ? pickSlab(hx, hy) : -1;
-          restCursor();
-        });
+        requestAnimationFrame(hover);
       }
     }
     if (!down || e.pointerId !== down.id) return;
@@ -118,30 +167,41 @@ export function startInteract(stage: HTMLElement): () => void {
     down.lx = e.clientX;
     down.ly = e.clientY;
     down.lt = now;
-    if (W.act === 1) {
-      live.sunOff += mx * 0.007;
-      live.sunV = down.vx * 0.007;
-    } else {
-      live.lookYaw = Math.max(-0.75, Math.min(0.75, down.yaw - dx * 0.0024));
-      live.lookPitch = Math.max(-0.35, Math.min(0.35, down.pitch + dy * 0.0016));
-      live.lookVy = 0;
-      live.lookVp = 0;
-    }
+    live.lookYaw = Math.max(-0.75, Math.min(0.75, down.yaw - dx * 0.0024));
+    live.lookPitch = Math.max(-0.35, Math.min(0.35, down.pitch + dy * 0.0016));
+    live.lookVy = 0;
+    live.lookVp = 0;
   };
 
   const end = (e: PointerEvent, cancel: boolean) => {
     if (!down || e.pointerId !== down.id) return;
     if (!down.moved && !cancel) click(e.clientX, e.clientY);
-    if (down.moved && W.act !== 1) {
+    if (down.moved) {
       live.lookVy = -down.vx * 0.0024 * 0.5;
       live.lookVp = down.vy * 0.0016 * 0.5;
     }
     down = null;
     live.dragging = false;
+    live.holding = false;
     restCursor();
   };
   const onUp = (e: PointerEvent) => end(e, false);
   const onCancel = (e: PointerEvent) => end(e, true);
+
+  // alive: on touch screens an idle wave of lights wanders over the city
+  let waveT = 0;
+  const unIdle = onFrame((f) => {
+    if (W.act !== 1 || frameAt(f.g) !== 0 || f.g < SEG.D0 - 10 || f.g > SEG.D1) return;
+    if (!touch) return;
+    waveT += f.dt;
+    if (waveT < 0.8) return;
+    waveT = 0;
+    const t = f.time * 0.35;
+    const sx = director.vw * (0.5 + 0.36 * Math.sin(t * 1.3)),
+      sy = director.vh * (0.5 + 0.28 * Math.sin(t * 2.1 + 1));
+    const h = cityHit(sx, sy);
+    if (h) addTrail(h[0], h[2], 0.4);
+  }, 40);
 
   window.addEventListener("pointerdown", onDown);
   window.addEventListener("pointermove", onMove, { passive: true });
@@ -149,6 +209,7 @@ export function startInteract(stage: HTMLElement): () => void {
   window.addEventListener("pointercancel", onCancel);
   restCursor();
   return () => {
+    unIdle();
     window.removeEventListener("pointerdown", onDown);
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("pointerup", onUp);

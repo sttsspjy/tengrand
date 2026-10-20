@@ -118,3 +118,132 @@ export function actParams(u: number) {
 export function actOf(u: number) {
   return u < 2.6 ? 1 : u < 5.48 ? 2 : 3;
 }
+
+// ───────────── Craft chapter ─────────────
+// Story position s (scroll): 0 hero · 1 about · 2→5 craft (k = s − 2: A alive · B motion · C louder) ·
+// 5→6 core transit · 6 capabilities · 7→8 work · 8→9 shatter · 9→10 contact.
+// Everything outside the craft runs on the legacy position u = legacyU(s); the craft scenes run on k.
+export const CRAFT_S0 = 2;
+export const CRAFT_LEN = 3;
+export const STORY_END = 10;
+export const CRAFT_IN = 1.65; // legacy u the craft leaves from
+export const CRAFT_OUT = 2.0; // legacy u the craft hands back to (core transit start)
+
+export function legacyU(s: number) {
+  if (s <= 1) return s;
+  if (s <= CRAFT_S0) return 1 + (CRAFT_IN - 1) * (s - 1);
+  if (s < CRAFT_S0 + CRAFT_LEN) return CRAFT_IN + (CRAFT_OUT - CRAFT_IN) * clamp01((s - CRAFT_S0 - 2.8) / 0.2);
+  return s - CRAFT_LEN;
+}
+
+// Slide windows on k (settled text holds inside [in, out]).
+export const SLIDES = [
+  { id: "alive", k0: 0, in: 0.3, out: 0.97, k1: 1 },
+  { id: "motion", k0: 1, in: 1.6, out: 1.97, k1: 2 },
+  { id: "louder", k0: 2, in: 2.5, out: 2.78, k1: 3 },
+] as const;
+
+// Form morphs on k: legacy helix → A field → B ring → C horn → legacy helix.
+export const MORPH = { inA: [0.02, 0.3], AB: [0.99, 1.24], BC: [1.99, 2.2], out: [2.76, 3.0] } as const;
+
+// Background scenes: 0 paper (legacy) · 1 white field · 2 black ring · 3 red horn · 4 paper (legacy); floods between them.
+export const CRAFT_FLOODS: [number, number, number][] = [
+  [0.1, 0.28, 1],
+  [1.04, 1.2, 2],
+  [2.02, 2.17, 3],
+  [2.8, 2.95, 4],
+];
+export function craftFlood(k: number) {
+  let i = -1;
+  for (let j = 0; j < CRAFT_FLOODS.length; j++) if (k >= CRAFT_FLOODS[j][0]) i = j;
+  if (i < 0) return { from: 0, to: 1, p: 0, i: 0 };
+  const [a, b, to] = CRAFT_FLOODS[i];
+  return { from: to - 1, to, p: ramp(k, a, b), i };
+}
+
+const add = (a: V3, b: V3, s = 1): V3 => [a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * s];
+const norm = (a: V3): V3 => {
+  const l = Math.hypot(a[0], a[1], a[2]) || 1;
+  return [a[0] / l, a[1] / l, a[2] / l];
+};
+const cross = (a: V3, b: V3): V3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const lerp3 = (a: V3, b: V3, t: number): V3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+
+// A: the flip field lies flat for the top-down view, then hinges up into a standing facade.
+export const facadeRise = (k: number) => smooth((k - 0.5) / 0.3);
+
+// Ring breath 0 (exhale) → 1 (inhale) on a ~4 s cycle, shared by the B ring and its type.
+export const breath01 = (now: number) => 0.5 - 0.5 * Math.cos((now / 4000) * Math.PI * 2);
+
+// Camera roll along a key list at u, eased like the camera orientation blend.
+export function rollAt(keys: Key[], u: number) {
+  let k = 0;
+  while (k < keys.length - 2 && u >= keys[k + 1].u) k++;
+  const a = keys[k];
+  const b = keys[k + 1];
+  const t = clamp01((u - a.u) / (b.u - a.u));
+  const te = 0.5 * (t + smooth(t));
+  return (a.roll ?? 0) + ((b.roll ?? 0) - (a.roll ?? 0)) * te;
+}
+
+export type Craft = ReturnType<typeof buildCraft>;
+
+// Scene anchors, form sizes and the craft camera path (k keys). First and last keys equal the legacy keys at
+// CRAFT_IN / CRAFT_OUT so the hand-over is seamless.
+export function buildCraft(narrow: boolean) {
+  const cols = narrow ? 32 : 44;
+  const rows = narrow ? 20 : 22;
+  const pitchX = narrow ? 0.5 : 0.56;
+  const pitchZ = 0.46;
+  const W = cols * pitchX;
+  const D = rows * pitchZ;
+  const CA: V3 = [0, -5, -3];
+  const H = narrow ? 22 : 25;
+
+  // The field hinges up on its front edge into a facade (see facadeRise); the grazing camera sits near its foot.
+  const frontZ = CA[2] + D / 2;
+  const gP = add(CA, narrow ? [-9, 0.7, D / 2 + 9] : [-14, 0.6, D / 2 + 9.5]);
+  const gT = add(CA, narrow ? [1.5, 3.4, D / 2 + 0.5] : [3, 3.2, D / 2 + 0.5]);
+  const aB = norm([gT[0] - gP[0], 0, gT[2] - gP[2]]); // ring axis: horizontal, along the grazing view
+  const upW: V3 = [0, 1, 0];
+  const rB = norm(cross(aB, upW));
+  const CB: V3 = add(add(gP, aB, 8), upW, -0.2);
+  const ringR = narrow ? 3.6 : 4.2;
+
+  const aC: V3 = [-rB[0], -rB[1], -rB[2]]; // horn axis (throat → mouth) points back across the ring
+  const CC: V3 = add(add(CB, aB, 2), rB, 18);
+  const rC = norm(cross([-aC[0], -aC[1], -aC[2]], upW)); // screen-right when looking down the horn
+  const hornL = 9;
+
+  // C settle: the bell sits upper right, clear of the type block, seen three-quarter so it reads as a horn.
+  const hornT = narrow ? add(add(add(CC, aC, 8), rC, -2.5), upW, -3) : add(add(add(CC, aC, 8), rC, -10.5), upW, -3.7);
+  const hornCam = (drift: number) =>
+    narrow
+      ? add(add(add(CC, aC, 27 + 1.5 * drift), rC, -6 - 0.5 * drift), upW, 2.2 + 0.3 * drift)
+      : add(add(add(CC, aC, 34 + 1.6 * drift), rC, -14 - 0.6 * drift), upW, 3.8 + 0.3 * drift);
+  const keys: Key[] = [
+    { u: 0, p: [-1.4, 1.2, 11.2], t: [0.6, -0.4, 0], roll: -0.02, fogN: 9, fogF: 21 },
+    { u: 0.14, p: [-3.2, 7.5, 10.5], t: add(CA, [0, 0, 1]), roll: -0.04, fogN: 10, fogF: 34 },
+    { u: 0.3, p: add(CA, [0, H, -1.4]), t: add(CA, [0, 0, -2.8]), up: [0, 0, -1], fogN: H - 4, fogF: H + 18 },
+    { u: 0.5, p: add(CA, [0.4, H * 0.95, -1.4]), t: add(CA, [0.4, 0, -2.75]), up: [0, 0, -1], roll: 0.025, fogN: H - 4, fogF: H + 18 },
+    { u: 0.68, p: add(CA, [-8, 7.5, D / 2 + 13]), t: add(CA, [0.5, 1.5, D / 2 - 1]), roll: 0.12, fogN: 12, fogF: 42 },
+    { u: 0.86, p: gP, t: gT, roll: -0.02, fogN: 8, fogF: 38 },
+    { u: 0.99, p: add(gP, aB, 1.2), t: add(gT, aB, 1.2), roll: -0.04, fogN: 8, fogF: 38 },
+    // B: into the ring, along its axis, then out and rolled to the side.
+    { u: 1.14, p: add(CB, aB, -4.2), t: add(CB, aB, 8), roll: 0, fogN: 6, fogF: 30 },
+    { u: 1.26, p: add(CB, aB, -0.9), t: add(CB, aB, 10), roll: 0.25, fogN: 3, fogF: 22 },
+    { u: 1.34, p: add(CB, aB, -0.4), t: add(CB, aB, 10), roll: 0.55, fogN: 3, fogF: 22 },
+    { u: 1.5, p: add(CB, aB, -9), t: CB, roll: 1.1, fogN: 6, fogF: 26 },
+    { u: 1.64, p: add(add(add(CB, aB, -12.5), rB, 5.5), upW, 1.4), t: add(CB, rB, 0.8), roll: Math.PI / 2, fogN: 9, fogF: 26 },
+    { u: 1.99, p: add(add(add(CB, aB, -11.5), rB, 5.2), upW, 1.2), t: add(CB, rB, 0.8), roll: Math.PI / 2 + 0.06, fogN: 9, fogF: 26 },
+    // C: whip-pan into the horn's throat, then blown backwards out of the bell.
+    { u: 2.1, p: lerp3(add(CB, aB, -6), add(CC, aC, 6), 0.5), t: add(CC, aB, 2), roll: 0.4, fogN: 6, fogF: 30 },
+    { u: 2.22, p: add(CC, aC, 2.1), t: add(CC, aC, -4), roll: 0.1, fogN: 3, fogF: 24 },
+    { u: 2.3, p: add(CC, aC, 1.8), t: add(CC, aC, -4), roll: 0, fogN: 3, fogF: 24 },
+    { u: 2.44, p: add(CC, aC, 9), t: CC, roll: -0.12, fogN: 6, fogF: 34 },
+    { u: 2.54, p: hornCam(0), t: hornT, roll: -0.05, fogN: 22, fogF: 76 },
+    { u: 2.78, p: hornCam(1), t: hornT, roll: -0.03, fogN: 22, fogF: 76 },
+    { u: 3.0, p: [0, 1.6, 12.4], t: [0, -0.6, 0], fogN: 9, fogF: 22 },
+  ];
+  return { cols, rows, pitchX, pitchZ, W, D, CA, frontZ, CB, aB, rB, ringR, CC, aC, rC, hornL, keys };
+}

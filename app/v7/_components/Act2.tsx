@@ -350,7 +350,7 @@ export default function Act2() {
 
         <section id="skills" className={s.cap} aria-labelledby="h-cap">
           <header className={s.intro} data-intro data-anchor="skills">
-            <p className={s.introKick}>2</p>
+            <p className={s.introKick}>3</p>
             <h2 id="h-cap" className={s.introTitle}>
               {chapters.skills}
             </h2>

@@ -6,13 +6,15 @@ import DecryptedText from "./DecryptedText";
 import Typewriter from "./Typewriter";
 import { useRides } from "./useRides";
 import type { RideInfo } from "./rig";
-import { SEG } from "./timeline";
+import { SEG, CHAPTERS } from "./timeline";
 import styles from "../n2.module.css";
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const TOTAL = String(CHAPTERS.length).padStart(2, "0");
 
-/** Night sea: intro (name, role, statement) on the horizon, then the about paragraphs drifting past in depth. */
-export default function ActNight() {
+/** Act I, the street canyon: name, role and statement at street level, then the about paragraphs
+ *  riding up the facade with the camera. */
+export default function ActCity() {
   const name = useRef<HTMLDivElement>(null);
   const role = useRef<HTMLDivElement>(null);
   const statement = useRef<HTMLParagraphElement>(null);
@@ -28,22 +30,22 @@ export default function ActNight() {
       return {
         el,
         g0,
-        g1: g0 + 55,
+        g1: g0 + 52,
         gin: g0 - 70,
-        gout: g0 + 100,
-        sx: 0.5,
-        sy: 0.86,
+        gout: g0 + 98,
+        sx: 0.34,
+        sy: 0.8,
         ax: 0.5,
         ay: 1,
         d: 7,
-        m: { sy: 0.88 },
+        m: { sx: 0.5, sy: 0.9 },
         drift: 0.08,
-        swing: k % 2 ? 26 : -26,
+        swing: k % 2 ? 24 : -24,
         rollK: 0.4,
         on: (i: RideInfo) => {
-          const lit = clamp01((i.g - (g0 - 28)) / 70) * (words.length + 2);
+          const lit = clamp01((i.g - (g0 - 30)) / 66) * (words.length + 2);
           for (let w = 0; w < words.length; w++) {
-            const o = 0.16 + 0.84 * clamp01(lit - w);
+            const o = 0.14 + 0.86 * clamp01(lit - w);
             if (Math.abs(o - last[w]) > 0.01) {
               last[w] = o;
               words[w].style.opacity = o.toFixed(2);
@@ -56,15 +58,15 @@ export default function ActNight() {
       name.current && {
         el: name.current,
         g0: -100,
-        g1: 18,
+        g1: 16,
         gin: -100,
         gout: 104,
-        sx: 0.11,
-        sy: 0.628,
+        sx: 0.075,
+        sy: 0.7,
         ax: 0,
         ay: 1,
         d: 9,
-        m: { sx: 0.05, sy: 0.6 },
+        m: { sx: 0.06, sy: 0.6 },
         drift: 0.03,
         rollK: 0.2,
       },
@@ -73,41 +75,41 @@ export default function ActNight() {
         g0: -100,
         g1: 8,
         gin: -100,
-        gout: 78,
-        sx: 0.94,
-        sy: 0.2,
+        gout: 80,
+        sx: 0.93,
+        sy: 0.17,
         ax: 1,
         ay: 0,
         d: 5.5,
-        m: { sx: 0.05, ax: 0, sy: 0.14 },
+        m: { sx: 0.06, ax: 0, sy: 0.13 },
         rollK: 0.2,
       },
       statement.current && {
         el: statement.current,
         g0: -100,
-        g1: 32,
+        g1: 30,
         gin: -100,
         gout: 112,
-        sx: 0.5,
-        sy: 0.885,
-        ax: 0.5,
+        sx: 0.075,
+        sy: 0.89,
+        ax: 0,
         ay: 1,
         d: 4.6,
-        m: { sy: 0.9 },
+        m: { sx: 0.06, sy: 0.9 },
         rollK: 0.4,
       },
       card.current && {
         el: card.current,
-        g0: 128,
-        g1: 162,
-        gin: 70,
-        gout: 222,
-        sx: 0.11,
-        sy: 0.25,
+        g0: SEG.CARD - 6,
+        g1: SEG.CARD + 34,
+        gin: SEG.CARD - 60,
+        gout: SEG.CARD + 92,
+        sx: 0.075,
+        sy: 0.2,
         ax: 0,
         ay: 0,
         d: 9,
-        m: { sx: 0.05, sy: 0.2 },
+        m: { sx: 0.06, sy: 0.18 },
         swing: -30,
         drift: 0.05,
       },
@@ -117,20 +119,17 @@ export default function ActNight() {
 
   return (
     <>
-      <section id="origin" className={styles.act} data-world="night" aria-labelledby="origin-title">
+      <section id="origin" className={styles.act} data-world="city" data-poster="0" aria-labelledby="origin-title">
         <div ref={name} className={`${styles.plane} ${styles.pName}`}>
           <p className={styles.label}>
             <span>
-              01 <span className={styles.labelDim}>/ 05</span>
+              01 <span className={styles.labelDim}>/ {TOTAL}</span>
             </span>
             <span>{chapters.intro}</span>
           </p>
           <h1 id="origin-title" className={styles.originName}>
-            <DecryptedText text={profile.name} delay={900} speed={95} />
+            <DecryptedText text={profile.name} delay={350} speed={90} />
           </h1>
-          <p className={styles.originReflection} aria-hidden="true">
-            {profile.name}
-          </p>
         </div>
 
         <div ref={role} className={`${styles.plane} ${styles.pRole}`}>
@@ -143,15 +142,15 @@ export default function ActNight() {
         </div>
 
         <p ref={statement} className={`${styles.plane} ${styles.pStatement}`}>
-          <Typewriter text={profile.statement} delay={2300} />
+          <Typewriter text={profile.statement} delay={1500} />
         </p>
       </section>
 
-      <section id="intent" className={styles.act} data-world="night" aria-labelledby="intent-title">
+      <section id="intent" className={styles.act} data-world="city" aria-labelledby="intent-title">
         <div ref={card} className={`${styles.plane} ${styles.pCard}`}>
           <p className={styles.label}>
             <span>
-              02 <span className={styles.labelDim}>/ 05</span>
+              02 <span className={styles.labelDim}>/ {TOTAL}</span>
             </span>
           </p>
           <h2 id="intent-title" className={styles.cardTitle}>

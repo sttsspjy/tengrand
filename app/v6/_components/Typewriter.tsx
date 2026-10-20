@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { onTitle } from "./director";
 import styles from "../n2.module.css";
 
 type Props = { text: string; delay?: number; min?: number; max?: number; className?: string };
@@ -41,8 +42,13 @@ export default function Typewriter({ text, delay = 0, min = 16, max = 46, classN
       if (cells[i].dataset.ws !== undefined) d += 20;
       t = window.setTimeout(step, d);
     };
-    t = window.setTimeout(step, delay);
-    return () => window.clearTimeout(t);
+    const unTitle = onTitle(() => {
+      t = window.setTimeout(step, delay);
+    });
+    return () => {
+      window.clearTimeout(t);
+      unTitle();
+    };
   }, [text, delay, min, max]);
 
   return (

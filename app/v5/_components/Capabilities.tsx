@@ -20,7 +20,7 @@ export default function Capabilities() {
   return (
     <section tabIndex={-1} id="v5-capabilities" className={`${s.act2} ${s.section}`} aria-labelledby="v5-cap-h">
       <header className={`${s.grid} ${s.secHead}`} data-plane data-ax="-30" data-ay="18" data-dz="280">
-        <span className={s.label}>(02)</span>
+        <span className={s.label}>(03)</span>
         <h2 id="v5-cap-h" className={s.secTitle}>
           {chapters.skills}
         </h2>

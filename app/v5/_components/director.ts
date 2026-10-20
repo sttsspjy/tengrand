@@ -4,9 +4,23 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { chapters } from "@/content/profile";
 import { scene, lenisRef, HINTS } from "./state";
-import { actOf, actParams, clamp01, cubicOut, ramp, smooth } from "./timeline";
+import {
+  CRAFT_LEN,
+  CRAFT_S0,
+  STORY_END,
+  actOf,
+  actParams,
+  breath01,
+  buildCraft,
+  clamp01,
+  cubicOut,
+  legacyU,
+  ramp,
+  rollAt,
+  smooth,
+} from "./timeline";
 
-const CHAPTERS = [chapters.intro, chapters.about, chapters.skills, chapters.work, chapters.contact];
+const CHAPTERS = [chapters.intro, chapters.about, chapters.craft, chapters.skills, chapters.work, chapters.contact];
 
 type Plane = { el: HTMLElement; st: ScrollTrigger; ax: number; ay: number; az: number; dz: number; last: string };
 
@@ -28,12 +42,13 @@ export function startDirector(root: HTMLElement) {
 
   // ── story marks (scroll px → u) ──
   const stAbout = ScrollTrigger.create({ trigger: "#v5-about", start: "top 12%" });
+  const stCraft = ScrollTrigger.create({ trigger: "#v5-craft", start: "top 70%", end: "bottom top" });
   const stCore = ScrollTrigger.create({ trigger: "#v5-core", start: "top top", end: "bottom bottom" });
   const stShatter = ScrollTrigger.create({ trigger: "#v5-shatter", start: "top top", end: "bottom bottom" });
   const stWorkFallback = ScrollTrigger.create({ trigger: "#v5-work", start: "top 40%", end: "bottom 60%" });
   const stHero = ScrollTrigger.create({ trigger: "#v5-top", start: "top top", end: "bottom top" });
   // Chapter heads: each fires when its section heading (top padding below the section top) enters the viewport.
-  const heads = ["#v5-about", "#v5-capabilities", "#v5-work", "#v5-contact"].map((sel) => {
+  const heads = ["#v5-about", "#v5-craft", "#v5-capabilities", "#v5-work", "#v5-contact"].map((sel) => {
     const sec = root.querySelector<HTMLElement>(sel)!;
     return ScrollTrigger.create({
       trigger: sec,
@@ -47,16 +62,19 @@ export function startDirector(root: HTMLElement) {
     maxY = ScrollTrigger.maxScroll(window);
     const pin = ScrollTrigger.getById("v5-work-pin");
     const w = pin ?? stWorkFallback;
+    const L = CRAFT_LEN;
     const raw: [number, number][] = [
       [0, 0],
       [stAbout.start, 1],
-      [stCore.start, 2],
-      [stCore.end, 3],
-      [w.start, 4],
-      [w.end, 5],
-      [stShatter.start, 5],
-      [stShatter.end, 6],
-      [ScrollTrigger.maxScroll(window), 7],
+      [stCraft.start, CRAFT_S0],
+      [stCraft.end, CRAFT_S0 + L],
+      [stCore.start, 2 + L],
+      [stCore.end, 3 + L],
+      [w.start, 4 + L],
+      [w.end, 5 + L],
+      [stShatter.start, 5 + L],
+      [stShatter.end, 6 + L],
+      [ScrollTrigger.maxScroll(window), STORY_END],
     ];
     for (let i = 1; i < raw.length; i++) raw[i][0] = Math.max(raw[i][0], raw[i - 1][0]);
     marks = raw;
@@ -74,7 +92,7 @@ export function startDirector(root: HTMLElement) {
         return u0 + ((u1 - u0) * (y - y0)) / Math.max(1, y1 - y0);
       }
     }
-    return 7;
+    return STORY_END;
   };
 
   // ── content planes ──
@@ -106,9 +124,120 @@ export function startDirector(root: HTMLElement) {
   const hudHint = one<HTMLElement>("[data-hud-hint]");
   const hudBar = one<HTMLElement>("[data-hud-bar]");
 
+  // ── craft layers ──
+  const slides = q<HTMLElement>("[data-slide]");
+  const headWords = slides.map((sl) => Array.from(sl.querySelectorAll<HTMLElement>("[data-head] [data-cw]")));
+  const bodyWords = slides.map((sl) => Array.from(sl.querySelectorAll<HTMLElement>("[data-cw]")).filter((el) => !el.closest("[data-head]")));
+  const slideLast = slides.map(() => ({ o: -1, xf: "" }));
+  const flies = q<HTMLElement>("[data-fly]");
+  const finalC = one<HTMLElement>("[data-final]");
+  const breathe = one<HTMLElement>("[data-breathe]");
+  const hair = one<HTMLElement>("[data-hair]");
+  const craftKeys = buildCraft(narrow).keys;
+  const drop = one<HTMLElement>("[data-drop]");
+  const hintRow = drop?.nextElementSibling as HTMLElement | null;
+  let dropLast = "";
+  const setSlide = (i: number, o: number, xf: string) => {
+    const L = slideLast[i];
+    const el = slides[i];
+    if (!el) return;
+    if (Math.abs(o - L.o) > 0.001) {
+      el.style.visibility = o > 0.001 ? "visible" : "hidden";
+      el.style.opacity = o.toFixed(3);
+      L.o = o;
+    }
+    if (xf !== L.xf) {
+      el.style.transform = xf;
+      L.xf = xf;
+    }
+  };
+  let craftIdle = false;
+  const craftTick = (k: number) => {
+    if (k < 0) {
+      if (!craftIdle) slides.forEach((_, i) => setSlide(i, 0, ""));
+      craftIdle = true;
+      return;
+    }
+    craftIdle = false;
+
+    // A · alive: title card over the wall; leaves by rushing past the lens as the camera dives into the ring.
+    if (k > 0.2 && k < 1.09) {
+      reveal(headWords[0], k, 0.22, 0.01, 0.06);
+      // The headline cuts out upward before the wall rises, then re-enters at the foot of the frame once the
+      // wall has cleared that band — it never crosses the wall.
+      const body = bodyWords[0];
+      if (k < 0.5) reveal(body, k, 0.26, 0.014, 0.08);
+      else if (k < 0.66)
+        body.forEach((el, j) => {
+          const t = smooth((k - 0.5 - j * 0.01) / 0.07);
+          el.style.transform = t <= 0 ? "" : `translate3d(0, ${(-t * 112).toFixed(1)}%, 0)`;
+        });
+      else reveal(body, k, 0.72, 0.014, 0.08);
+      const dr = k >= 0.62 ? 1 : 0;
+      if (drop) {
+        const top = drop.offsetTop;
+        const room = window.innerHeight - top - drop.offsetHeight - (hintRow ? window.innerHeight - hintRow.offsetTop + 22 : 90);
+        const xf = dr > 0 ? `translate3d(0, ${(dr * room).toFixed(1)}px, 0)` : "";
+        if (xf !== dropLast) drop.style.transform = dropLast = xf;
+      }
+      const out = ramp(k, 0.97, 1.08);
+      setSlide(0, 1 - ramp(k, 1.0, 1.08), out > 0 ? `perspective(900px) translate3d(0, ${(-out * 6).toFixed(2)}vh, ${(out * 620).toFixed(0)}px)` : "");
+    } else setSlide(0, 0, "");
+
+    // B · motion: anchored in the ring, so it unrolls with the camera roll and shrinks as the camera pulls out.
+    if (k > 1.26 && k < 2.09) {
+      reveal(headWords[1], k, 1.5, 0.01, 0.06);
+      reveal(bodyWords[1], k, 1.36, 0.022, 0.1);
+      const pull = 1 - smooth((k - 1.32) / 0.34);
+      const rot = -(Math.PI / 2 - rollAt(craftKeys, k)) * (180 / Math.PI);
+      const out = ramp(k, 1.98, 2.08);
+      const xf = out > 0 ? `translate3d(${(-out * 70).toFixed(2)}vw, 0, 0) skewX(${(out * 18).toFixed(2)}deg)` : "";
+      setSlide(1, ramp(k, 1.28, 1.4) * (1 - ramp(k, 2.0, 2.08)), xf);
+      const br = breath01(performance.now());
+      const sc = (1 + 1.9 * pull * pull) * (1 + 0.022 * (br - 0.5) * 2);
+      if (breathe) breathe.style.transform = `rotate(${rot.toFixed(2)}deg) scale(${sc.toFixed(4)})`;
+      if (hair) hair.style.transform = `scaleX(${(0.3 + 0.7 * br).toFixed(3)})`;
+    } else setSlide(1, 0, "");
+
+    // C · louder: the phrase fires out of the horn word by word, then lands as one enormous line.
+    if (k > 2.22 && k < 2.92) {
+      reveal(headWords[2], k, 2.26, 0.01, 0.06);
+      const R = window.innerHeight * 0.16;
+      flies.forEach((w, j) => {
+        const pass = 2.3 + j * 0.036;
+        const z = (k - pass) * 16000;
+        const o = clamp01((z + 800) / 300) * (1 - clamp01((z - 100) / 320));
+        w.style.opacity = o.toFixed(3);
+        if (o > 0) {
+          const ang = (j * 2.4 + 0.6) % (Math.PI * 2);
+          w.style.transform = `perspective(800px) translate3d(-50%, -50%, ${Math.min(z, 700).toFixed(0)}px) translate(${(Math.cos(ang) * R * 1.6).toFixed(0)}px, ${(Math.sin(ang) * R).toFixed(0)}px) rotate(${(((j % 3) - 1) * 4).toFixed(1)}deg)`;
+        }
+      });
+      reveal(bodyWords[2], k, 2.47, 0.009, 0.06);
+      const land = smooth((k - 2.47) / 0.1);
+      const out = ramp(k, 2.78, 2.9);
+      if (finalC)
+        finalC.style.transform =
+          out > 0
+            ? `perspective(900px) translate3d(0, 0, ${(out * 520).toFixed(0)}px)`
+            : land < 1
+              ? `scale(${(1 + 0.16 * (1 - land)).toFixed(4)})`
+              : "";
+      setSlide(2, ramp(k, 2.22, 2.27) * (1 - ramp(k, 2.82, 2.9)), "");
+    } else setSlide(2, 0, "");
+  };
+  // Words rise through their masks in order, starting at k0 and spaced `each` apart (span = rise length).
+  const reveal = (els: HTMLElement[], k: number, k0: number, each: number, span: number) => {
+    els.forEach((el, j) => {
+      const t = smooth((k - k0 - j * each) / span);
+      el.style.transform = t >= 1 ? "" : `translate3d(0, ${((1 - t) * 112).toFixed(1)}%, 0)`;
+    });
+  };
+
   const amp = narrow ? 0.55 : 1;
-  let cu = -1;
-  let act = 0;
+  let cs = -1;
+  let cu = 0;
+  let act = "";
   let chapter = -1;
   let lean = 0;
   let tpx = 0;
@@ -119,16 +248,27 @@ export function startDirector(root: HTMLElement) {
 
   const tick = (_t: number, dtMs: number) => {
     const dt = Math.min(dtMs / 1000, 0.05);
-    let u = uAt(window.scrollY);
+    let sp = uAt(window.scrollY);
     if (reduce) {
-      if (u > 2 && u < 3) u = u < 2.5 ? 2 : 3;
-      if (u > 5 && u < 6) u = u < 5.5 ? 5 : 6;
+      // act switches and craft scenes become clean cuts
+      const L = CRAFT_LEN;
+      if (sp > 2 + L && sp < 3 + L) sp = sp < 2.5 + L ? 2 + L : 3 + L;
+      if (sp > 5 + L && sp < 6 + L) sp = sp < 5.5 + L ? 5 + L : 6 + L;
+      if (sp > CRAFT_S0 && sp < CRAFT_S0 + L) {
+        const k = sp - CRAFT_S0;
+        sp = CRAFT_S0 + (k < 1 ? 0.6 : k < 2 ? 1.8 : 2.6);
+      }
     }
-    scene.u = u;
-    if (cu < 0 || reduce) cu = u;
-    else cu += (u - cu) * (1 - Math.exp(-dt * 6.5));
-    if (Math.abs(cu - u) < 0.0004) cu = u;
+    scene.s = sp;
+    scene.u = legacyU(sp);
+    if (cs < 0 || reduce) cs = sp;
+    else cs += (sp - cs) * (1 - Math.exp(-dt * 6.5));
+    if (Math.abs(cs - sp) < 0.0004) cs = sp;
+    scene.cs = cs;
+    cu = legacyU(cs);
     scene.cu = cu;
+    const ck = cs > CRAFT_S0 && cs < CRAFT_S0 + CRAFT_LEN ? cs - CRAFT_S0 : -1;
+    scene.ck = ck;
 
     const dim = narrow && cu > 3.06 && cu < 4.96;
     if (dim !== dimFlag) {
@@ -140,10 +280,11 @@ export function startDirector(root: HTMLElement) {
       heroFlag = inHero;
       root.toggleAttribute("data-hero", inHero);
     }
-    const a = actOf(cu);
+    const a =
+      ck < 0 ? String(actOf(cu)) : ck < 0.2 ? "1" : ck < 1.12 ? "a" : ck < 2.1 ? "b" : ck < 2.88 ? "c" : "1";
     if (a !== act) {
       act = a;
-      root.dataset.act = String(a);
+      root.dataset.act = a;
       scene.act = a;
       if (hudHint) {
         hudHint.textContent = HINTS[a][touch ? 1 : 0];
@@ -152,18 +293,20 @@ export function startDirector(root: HTMLElement) {
         hudHint.classList.add("v5-flash");
       }
     }
-    // Skills also starts when its title card arrives in the core transit.
+    // Craft starts with its first slide; Skills also starts when its title card arrives in the core transit.
     let ch = 0;
     const y = window.scrollY;
     heads.forEach((h, i) => {
-      if (y >= h.start || (i === 1 && cu >= 2.7)) ch = i + 1;
+      if (i === 1 ? cs >= CRAFT_S0 + 0.24 : y >= h.start || (i === 2 && cu >= 2.7 && ck < 0)) ch = i + 1;
     });
     if (ch !== chapter) {
       chapter = ch;
       if (hudChapter) hudChapter.textContent = `${String(ch).padStart(2, "0")} ${CHAPTERS[ch]}`;
     }
-    if (hudBar) hudBar.style.transform = `scaleX(${(cu / 7).toFixed(4)})`;
+    if (hudBar) hudBar.style.transform = `scaleX(${(cs / STORY_END).toFixed(4)})`;
     if (reduce) return;
+
+    craftTick(ck);
 
     // velocity lean + pointer tilt shared by every plane
     const v = lenisRef.current?.velocity ?? 0;

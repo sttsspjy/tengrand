@@ -1,5 +1,9 @@
 // Entrance questionnaire copy and scoring. Each answer votes for one world; the most votes picks the world.
 
+// Session cookie naming the world served at "/" (read by proxy.ts); RESTART_HREF clears it.
+export const WORLD_COOKIE = "tg_world";
+export const RESTART_HREF = "/restart";
+
 export type WorldId = "monolith" | "nocturne" | "codex";
 
 export type World = {

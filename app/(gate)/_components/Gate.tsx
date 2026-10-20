@@ -2,35 +2,30 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionConfig, motion, type Variants } from "motion/react";
 import { profile } from "@/content/profile";
-import { intro, questions, score, worlds, type WorldId } from "@/content/quiz";
-import { CAM_RESULT, WORLD_IDS, aim, createRig, oneHot, tally } from "./rig";
+import { WORLD_COOKIE, intro, questions, score, worlds, type WorldId } from "@/content/quiz";
+import { BLADES_AT, CONTRACT, EXIT_MS, WORLD_IDS, createRig, lightsFor, tally } from "./rig";
 import s from "../gate.module.css";
 
-const Sculpture = dynamic(() => import("./Sculpture"), { ssr: false });
-
-// First frame of each world, so the flood hands over without a visible cut.
-const FLOOD: Record<WorldId, string> = {
-  monolith: "#eceae4",
-  nocturne: "#000000",
-  codex: "radial-gradient(ellipse 80% 70% at 50% 45%, #2e2822 0%, #17130f 75%)",
-};
+const Trine = dynamic(() => import("./Trine"), { ssr: false });
 
 const RESULT = questions.length + 1; // step index of the result
 const EASE = [0.16, 1, 0.3, 1] as const;
-const INTERACTIVE = "a, button, h1, p, li";
+const INTERACTIVE = "a, button, h1, h2, p, li";
+const LETTER: Record<WorldId, string> = { monolith: "M", nocturne: "N", codex: "C" };
+const BLADES = 12;
 
 const words: Variants = {
-  hidden: { y: "108%" },
-  show: (i: number) => ({ y: "0%", transition: { duration: 1.1, ease: EASE, delay: 0.08 + i * 0.035 } }),
+  hidden: { y: "110%" },
+  show: (i: number) => ({ y: "0%", transition: { duration: 1.05, ease: EASE, delay: 0.06 + i * 0.03 } }),
 };
 const rise: Variants = {
-  hidden: { opacity: 0, y: 18 },
+  hidden: { opacity: 0, y: 14 },
   show: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.9, ease: EASE, delay: i } }),
 };
-const stepExit = { opacity: 0, y: -14, transition: { duration: 0.42, ease: [0.7, 0, 0.84, 0] as const } };
+const stepExit = { opacity: 0, y: -10, transition: { duration: 0.36, ease: [0.7, 0, 0.84, 0] as const } };
 
 function Words({ text, delay = 0 }: { text: string; delay?: number }) {
   return text.split(" ").map((w, i, a) => (
@@ -53,8 +48,8 @@ export default function Gate() {
 
   const root = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const flood = useRef<HTMLDivElement>(null);
-  const valueRef = useRef<HTMLParagraphElement>(null);
+  const cover = useRef<HTMLDivElement>(null);
+  const blades = useRef<HTMLDivElement>(null);
   const headRef = useRef<HTMLHeadingElement>(null);
 
   const [step, setStep] = useState(0);
@@ -70,7 +65,7 @@ export default function Gate() {
   const inQuestion = step >= 1 && step <= questions.length;
   const winner = picks.length === questions.length ? score(picks) : null;
 
-  // Under reduced motion, pose and camera changes snap behind a short crossfade of the stage.
+  // Under reduced motion, scene changes snap behind a short crossfade of the stage.
   const apply = useCallback(
     (fn: () => void) => {
       if (!rig.reduced) return fn();
@@ -82,46 +77,24 @@ export default function Gate() {
 
   useEffect(() => {
     rig.reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const q = new URLSearchParams(window.location.search);
+    if (q.has("debug")) rig.slow = Number(q.get("slow")) || 1;
     setTouch(window.matchMedia("(hover: none)").matches);
+    rig.wake();
   }, [rig]);
 
-  // Intro: the sculpture cycles through the three forms.
+  // Scene follows the step: camera key, object pose and the tally's light balance.
+  const mounted = useRef(false);
   useEffect(() => {
-    if (step !== 0 || rig.reduced) return;
-    let k = 0;
-    const id = window.setInterval(() => {
-      k = (k + 1) % 3;
-      aim(rig, oneHot(WORLD_IDS[k]), 1.3);
-    }, 7200);
-    return () => window.clearInterval(id);
-  }, [step, rig]);
-
-  // Camera key + blend target follow the step.
-  useEffect(() => {
-    if (step === 0) return;
-    apply(() => {
-      if (step === RESULT && winner) {
-        rig.cam = CAM_RESULT + WORLD_IDS.indexOf(winner);
-        aim(rig, oneHot(winner), 1.4);
-      } else {
-        rig.cam = step;
-        aim(rig, tally(picks), 1.1);
-      }
-      rig.stamp++;
+    const run = mounted.current ? apply : (fn: () => void) => fn();
+    mounted.current = true;
+    run(() => {
+      rig.step = step;
+      rig.winner = step === RESULT ? winner : null;
+      rig.lights = lightsFor(tally(picks));
+      rig.wake();
     });
   }, [step, picks, winner, rig, apply]);
-
-  useEffect(() => {
-    if (step === 0 && !leaving) {
-      rig.cam = 0;
-      rig.stamp++;
-    }
-  }, [step, leaving, rig]);
-
-  useEffect(() => {
-    if (step !== RESULT) return;
-    for (const id of WORLD_IDS) router.prefetch(worlds[id].href);
-  }, [step, router]);
 
   // Focus the new step's heading for keyboard and screen-reader users.
   useEffect(() => {
@@ -130,27 +103,11 @@ export default function Gate() {
     return () => window.clearTimeout(t);
   }, [step]);
 
-  // Fits the huge result word to the viewport.
-  useLayoutEffect(() => {
-    if (step !== RESULT) return;
-    const fit = () => {
-      const el = valueRef.current;
-      if (!el) return;
-      el.style.fontSize = "100px";
-      const w = el.scrollWidth;
-      const max = Math.min((window.innerWidth * (window.innerWidth < 760 ? 0.9 : 0.8) * 100) / w, window.innerHeight * 0.36);
-      el.style.fontSize = `${max.toFixed(1)}px`;
-    };
-    fit();
-    document.fonts?.ready.then(fit);
-    window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
-  }, [step]);
-
   const preview = useCallback(
     (j: number | null) => {
-      if (!inQuestion || rig.reduced || busy.current) return;
-      aim(rig, tally(picks, j === null ? null : questions[qi].answers[j].world), 0.55);
+      if (!inQuestion || busy.current) return;
+      rig.lights = lightsFor(tally(picks, j === null ? null : questions[qi].answers[j].world));
+      rig.wake();
     },
     [inQuestion, rig, picks, qi]
   );
@@ -181,16 +138,11 @@ export default function Gate() {
     if (step === 1) {
       setPicks([]);
       setStep(0);
-      apply(() => {
-        aim(rig, oneHot("monolith"), 1.1);
-        rig.cam = 0;
-        rig.stamp++;
-      });
       return;
     }
     setPicks((p) => p.slice(0, step - 2));
     setStep(step - 1);
-  }, [step, rig, apply]);
+  }, [step]);
 
   const begin = useCallback(() => {
     if (busy.current) return;
@@ -202,31 +154,35 @@ export default function Gate() {
       if (busy.current) return;
       busy.current = true;
       setLeaving(id);
-      const href = worlds[id].href;
-      router.prefetch(href);
-      const f = flood.current!;
-      f.style.background = FLOOD[id];
-      f.style.visibility = "visible";
-      const go = () => router.push(href);
-      if (rig.reduced) {
-        f.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, easing: "ease-out", fill: "forwards" }).onfinish = go;
+      const c = cover.current!;
+      c.style.background = CONTRACT[id];
+      // Full contract colour is up: flag the world's arrival, set the session cookie, swap the tree in place.
+      const finish = () => {
+        c.style.visibility = "visible";
+        c.style.opacity = "1";
+        document.documentElement.dataset.entry = id;
+        document.cookie = `${WORLD_COOKIE}=${id}; path=/; samesite=lax`;
+        router.refresh();
+      };
+      if (rig.reduced || (id !== "monolith" && !rig.out.gl)) {
+        c.style.visibility = "visible";
+        c.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, easing: "ease-out", fill: "forwards" }).onfinish = finish;
         return;
       }
-      aim(rig, oneHot(id), 0.5);
-      rig.dive = true;
-      rig.stamp++;
-      const W = window.innerWidth;
-      const H = window.innerHeight;
-      const cx = rig.out.cx >= 0 ? rig.out.cx : W / 2;
-      const cy = rig.out.cy >= 0 ? rig.out.cy : H / 2;
-      const r = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy)) + 4;
-      f.style.opacity = "1";
-      f.animate([{ clipPath: `circle(0px at ${cx}px ${cy}px)` }, { clipPath: `circle(${r}px at ${cx}px ${cy}px)` }], {
-        duration: 1150,
-        delay: 520,
-        easing: "cubic-bezier(0.66, 0, 0.2, 1)",
-        fill: "both",
-      }).onfinish = go;
+      rig.exit = { id, t0: performance.now() };
+      rig.wake();
+      if (id === "monolith") {
+        const bs = Array.from(blades.current!.children) as HTMLElement[];
+        bs.forEach((b, i) =>
+          b.animate([{ transform: "translateY(-101%)" }, { transform: "translateY(0)" }], {
+            duration: 270 * rig.slow,
+            delay: (BLADES_AT + i * 24) * rig.slow,
+            easing: "cubic-bezier(0.95, 0.05, 0.795, 0.035)",
+            fill: "both",
+          })
+        );
+      }
+      window.setTimeout(finish, EXIT_MS[id] * rig.slow);
     },
     [rig, router]
   );
@@ -255,14 +211,16 @@ export default function Gate() {
     return () => window.removeEventListener("keydown", onKey);
   }, [leaving, inQuestion, qi, step, sel, winner, begin, commit, handoff, preview]);
 
-  // Pointer: drag on empty space to spin the sculpture; pointer position drives a light parallax.
+  // Pointer: drag on empty space turns the solid; pointer position drives a slight camera parallax.
   useEffect(() => {
     const el = root.current!;
-    let down: { id: number; x: number; y: number; lx: number; type: string; drag: boolean } | null = null;
+    let down: { id: number; x: number; y: number; lx: number; drag: boolean } | null = null;
     const onMove = (e: PointerEvent) => {
-      rig.px = (e.clientX / window.innerWidth) * 2 - 1;
-      rig.py = (e.clientY / window.innerHeight) * 2 - 1;
-      rig.stamp++;
+      if (e.pointerType === "mouse") {
+        rig.px = (e.clientX / window.innerWidth) * 2 - 1;
+        rig.py = (e.clientY / window.innerHeight) * 2 - 1;
+        rig.wake();
+      }
       if (!down || down.id !== e.pointerId) return;
       const dx = e.clientX - down.x;
       const dy = e.clientY - down.y;
@@ -271,19 +229,22 @@ export default function Gate() {
         rig.dragging = true;
         el.toggleAttribute("data-grabbing", true);
       }
-      if (down.drag) rig.dragDX += e.clientX - down.lx;
+      if (down.drag) {
+        rig.dragDX += e.clientX - down.lx;
+        rig.wake();
+      }
       down.lx = e.clientX;
     };
     const onDown = (e: PointerEvent) => {
       if (e.button !== 0 || (e.target as HTMLElement).closest(INTERACTIVE)) return;
-      down = { id: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, type: e.pointerType, drag: false };
+      down = { id: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, drag: false };
       if (e.pointerType === "mouse") e.preventDefault();
     };
     const onUp = (e: PointerEvent) => {
       if (!down || down.id !== e.pointerId) return;
       down = null;
       rig.dragging = false;
-      rig.stamp++;
+      rig.wake();
       el.toggleAttribute("data-grabbing", false);
     };
     window.addEventListener("pointermove", onMove, { passive: true });
@@ -300,6 +261,7 @@ export default function Gate() {
 
   const others = winner ? WORLD_IDS.filter((id) => id !== winner) : [];
   const hint = touch ? "Swipe to turn" : "Drag to turn";
+  const titleWords = intro.title.split(" ");
 
   return (
     <MotionConfig reducedMotion="user">
@@ -307,39 +269,12 @@ export default function Gate() {
         ref={root}
         className={s.page}
         data-step={step === 0 ? "intro" : step === RESULT ? "result" : "question"}
+        data-world={step === RESULT && winner ? winner : undefined}
         data-leaving={leaving ? "" : undefined}
       >
-        <div className={s.back} data-world={winner ?? undefined} aria-hidden="true">
-          <AnimatePresence>
-            {step === RESULT && winner && (
-              <motion.p
-                key={winner}
-                ref={valueRef}
-                className={s.value}
-                initial="hidden"
-                animate="show"
-                exit={{ opacity: 0, transition: { duration: 0.4 } }}
-              >
-                {Array.from(worlds[winner].value).map((c, i) => (
-                  <span key={i} className={s.vm}>
-                    <motion.span
-                      className={s.w}
-                      variants={{
-                        hidden: { y: "105%" },
-                        show: { y: "0%", transition: { duration: 1.4, ease: EASE, delay: 0.5 + i * 0.07 } },
-                      }}
-                    >
-                      {c}
-                    </motion.span>
-                  </span>
-                ))}
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div ref={stage} className={s.stage} aria-hidden="true">
-          <Sculpture rig={rig} onReady={() => stage.current?.setAttribute("data-ready", "")} />
+        <div className={s.poster} aria-hidden="true" />
+        <div ref={stage} className={s.stageWrap}>
+          <Trine rig={rig} />
         </div>
 
         <div className={s.ui}>
@@ -347,7 +282,9 @@ export default function Gate() {
             <p className={s.name}>{profile.name}</p>
             {shown >= 1 && shown <= questions.length && (
               <p className={s.progress} aria-live="polite">
-                {shown} / {questions.length}
+                <span className={s.progNow}>{shown}</span>
+                <span className={s.progSep}> / </span>
+                {questions.length}
               </p>
             )}
           </header>
@@ -357,21 +294,24 @@ export default function Gate() {
               {step === 0 && (
                 <motion.section key="intro" className={`${s.step} ${s.intro}`} exit={stepExit} initial="hidden" animate="show">
                   <h1 className={s.title}>
-                    {intro.title.split(" ").map((w, i, a) => (
+                    {titleWords.map((w, i) => (
                       <Fragment key={i}>
                         <span className={s.wm}>
-                          <span className={`${s.w} ${s.cssWord}`} style={{ animationDelay: `${0.15 + i * 0.09}s` }}>
+                          <span
+                            className={`${s.w} ${s.cssWord} ${i >= titleWords.length - 2 ? s.titleItal : ""}`}
+                            style={{ animationDelay: `${0.25 + i * 0.08}s` }}
+                          >
                             {w}
                           </span>
                         </span>
-                        {i < a.length - 1 ? " " : null}
+                        {i < titleWords.length - 1 ? " " : null}
                       </Fragment>
                     ))}
                   </h1>
-                  <p className={`${s.lede} ${s.cssRise}`} style={{ animationDelay: "0.55s" }}>
+                  <p className={`${s.lede} ${s.cssRise}`} style={{ animationDelay: "0.75s" }}>
                     {intro.line}
                   </p>
-                  <div className={`${s.actions} ${s.cssRise}`} style={{ animationDelay: "0.75s" }}>
+                  <div className={`${s.actions} ${s.cssRise}`} style={{ animationDelay: "0.95s" }}>
                     <button type="button" className={s.big} onClick={begin}>
                       {intro.start}
                     </button>
@@ -389,7 +329,7 @@ export default function Gate() {
                   </h1>
                   <ol className={s.answers} data-chosen={chosen !== null ? "" : undefined}>
                     {questions[qi].answers.map((a, j) => (
-                      <motion.li key={j} variants={rise} custom={0.45 + j * 0.09}>
+                      <motion.li key={j} variants={rise} custom={0.4 + j * 0.08}>
                         <button
                           type="button"
                           className={s.answer}
@@ -414,20 +354,36 @@ export default function Gate() {
               {step === RESULT && winner && (
                 <motion.section key="result" className={`${s.step} ${s.result}`} exit={stepExit} initial="hidden" animate="show">
                   <h1 ref={headRef} tabIndex={-1} className={s.resultHead}>
-                    <motion.span className={s.label} variants={rise} custom={0.2}>
+                    <motion.span className={s.label} variants={rise} custom={0.5}>
                       {intro.result}
                     </motion.span>
                     <span className={s.srOnly}>: </span>
-                    <motion.span className={s.worldName} variants={rise} custom={0.3}>
+                    <motion.span className={s.worldName} variants={rise} custom={0.62}>
+                      <span className={s.letter} aria-hidden="true">
+                        {LETTER[winner]}
+                      </span>
                       {worlds[winner].name}
                     </motion.span>
-                    <span className={s.srOnly}>, {worlds[winner].value}</span>
+                    <span className={s.srOnly}>, </span>
+                    <span className={s.value}>
+                      <span className={s.vm}>
+                        <motion.span
+                          className={s.w}
+                          variants={{
+                            hidden: { y: "105%" },
+                            show: { y: "0%", transition: { duration: 1.4, ease: EASE, delay: 0.9 } },
+                          }}
+                        >
+                          {worlds[winner].value}
+                        </motion.span>
+                      </span>
+                    </span>
                   </h1>
-                  <div className={s.resultFoot}>
-                    <motion.p className={s.line} variants={rise} custom={1.3}>
+                  <div className={s.resultSide}>
+                    <motion.p className={s.line} variants={rise} custom={1.5}>
                       {worlds[winner].line}
                     </motion.p>
-                    <motion.div className={s.resultActions} variants={rise} custom={1.5}>
+                    <motion.div className={s.resultActions} variants={rise} custom={1.7}>
                       <button type="button" className={s.big} onClick={() => handoff(winner)}>
                         {intro.enter}
                       </button>
@@ -462,7 +418,13 @@ export default function Gate() {
                 Back
               </button>
             ) : (
-              <span />
+              <p className={s.key} aria-hidden="true">
+                {WORLD_IDS.map((id) => (
+                  <span key={id}>
+                    <b>{LETTER[id]}</b> {worlds[id].name}
+                  </span>
+                ))}
+              </p>
             )}
             <p className={s.hint} aria-hidden="true">
               {hint}
@@ -470,7 +432,12 @@ export default function Gate() {
           </footer>
         </div>
 
-        <div ref={flood} className={s.flood} aria-hidden="true" />
+        <div ref={blades} className={s.blades} aria-hidden="true">
+          {Array.from({ length: BLADES }, (_, i) => (
+            <span key={i} />
+          ))}
+        </div>
+        <div ref={cover} className={s.cover} aria-hidden="true" />
       </div>
     </MotionConfig>
   );

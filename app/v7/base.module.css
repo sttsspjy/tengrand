@@ -140,7 +140,8 @@
 .page[data-sec="1"] .hudActs li[data-a="1"] a,
 .page[data-sec="2"] .hudActs li[data-a="2"] a,
 .page[data-sec="3"] .hudActs li[data-a="3"] a,
-.page[data-sec="4"] .hudActs li[data-a="4"] a {
+.page[data-sec="4"] .hudActs li[data-a="4"] a,
+.page[data-sec="5"] .hudActs li[data-a="5"] a {
   opacity: 1;
 }
 .hudRight {
@@ -165,6 +166,19 @@
 .root :focus-visible {
   outline: 2px solid var(--hud-focus, #c8361d);
   outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------- entrance cover (ink, from the gate) */
+
+.cover {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #1c1a19;
+  display: none;
+}
+:global(html[data-entry="codex"]) .cover {
+  display: block;
 }
 
 /* ---------------------------------------------------------------- footer (shown at the last station) */
@@ -249,18 +263,20 @@
   .page[data-sec="1"] .hudActs li[data-a="1"] a,
   .page[data-sec="2"] .hudActs li[data-a="2"] a,
   .page[data-sec="3"] .hudActs li[data-a="3"] a,
-  .page[data-sec="4"] .hudActs li[data-a="4"] a {
+  .page[data-sec="4"] .hudActs li[data-a="4"] a,
+  .page[data-sec="5"] .hudActs li[data-a="5"] a {
     font-size: 11px;
     letter-spacing: 0.14em;
   }
-  .page[data-act="2"][data-sec="2"] .hudActs li[data-a="2"] a {
+  .page[data-act="2"][data-sec="3"] .hudActs li[data-a="3"] a {
     font-size: 10px;
     letter-spacing: 0.1em;
   }
   .page[data-sec="1"] .hudActs li[data-a="1"] b,
   .page[data-sec="2"] .hudActs li[data-a="2"] b,
   .page[data-sec="3"] .hudActs li[data-a="3"] b,
-  .page[data-sec="4"] .hudActs li[data-a="4"] b {
+  .page[data-sec="4"] .hudActs li[data-a="4"] b,
+  .page[data-sec="5"] .hudActs li[data-a="5"] b {
     margin-right: 6px;
   }
   .footer {

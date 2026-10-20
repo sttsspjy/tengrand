@@ -33,7 +33,6 @@ export default function Act1({ children }: { children: React.ReactNode }) {
     let track: Track | null = null;
     let graphPose: Pose = { cx: 0, cy: 0, s: 1, tilt: 0, rot: 0 };
     let C = { x: 0, y: 0 };
-    let graphFrom = 0;
     let lastKey = "";
     let clip = "";
     let fade = "";
@@ -76,23 +75,39 @@ export default function Act1({ children }: { children: React.ReactNode }) {
       return { x: r.cx + dx * c - dy * sn, y: r.cy + dx * sn + dy * c };
     };
 
+    let track2: Track | null = null;
+    let a1Len = 0;
+    const plate = { len: 0, anchors: {} as Record<string, number> };
+
     const un = registerPart("act1", {
       owns: "a1",
-      measure: (vw, vh) => {
+      measure: (vw, vh, mobile) => {
         const hero = regionOf("hero");
         const about = regionOf("about");
         const graph = regionOf("graph");
         const extra = Math.max(0, about.r.h - vh * 0.9);
+        const aboutEnd = poseFor(about.r, extra / 2);
+        // exit into Craft: the camera drops to a grazing angle over the manuscript and rushes forward
+        const graze: Pose = { ...poseFor(about.r, extra / 2 - vh * (mobile ? 0.9 : 0.75)), tilt: 76, s: mobile ? 1.15 : 1.5 };
         const segs = [
           { kind: "hold" as const, a: poseFor(hero.r), len: 0.3 * vh, id: "top" },
           { kind: "fly" as const, len: 1.0 * vh, arc: { tilt: 38, s: -0.42, rot: -7 } },
-          { kind: "hold" as const, a: poseFor(about.r, -extra / 2), b: poseFor(about.r, extra / 2), len: 0.4 * vh + extra * 1.15, id: "about" },
-          { kind: "fly" as const, len: 1.1 * vh, arc: { tilt: 44, s: -0.5, rot: 10 } },
-          { kind: "hold" as const, a: poseFor(graph.r), len: 0.85 * vh, id: "plate" },
+          { kind: "hold" as const, a: poseFor(about.r, -extra / 2), b: aboutEnd, len: 0.4 * vh + extra * 1.15, id: "about" },
+          { kind: "fly" as const, len: 0.95 * vh, ease: (t: number) => t * t * (1.6 - 0.6 * t) },
+          { kind: "hold" as const, a: graze, len: 0 },
         ];
         track = new Track(segs);
+        a1Len = track.total;
+        // the plate part: Craft's last scene hands back to the manuscript from high overhead, spinning in
         graphPose = poseFor(graph.r);
-        graphFrom = track.startOf("about") + segs[2].len;
+        const entry: Pose = { ...graphPose, s: mobile ? 0.16 : 0.2, rot: graphPose.rot + 150, tilt: 18 };
+        track2 = new Track([
+          { kind: "hold", a: entry, len: 0 },
+          { kind: "fly", len: 1.05 * vh, ease: (t: number) => 1 - Math.pow(1 - t, 3), arc: { tilt: 26 } },
+          { kind: "hold", a: graphPose, len: 0.85 * vh, id: "plate" },
+        ]);
+        plate.len = track2.total;
+        plate.anchors = { plate: track2.startOf("plate") + 0.1 * vh };
         hero.el.dataset.span = "0.3";
         about.el.dataset.span = String(segs[2].len / vh);
         graph.el.dataset.span = "0.95";
@@ -120,12 +135,12 @@ export default function Act1({ children }: { children: React.ReactNode }) {
         );
         routeSvg.current?.setAttribute("viewBox", `0 0 ${sheet.offsetWidth} ${sheet.offsetHeight}`);
         lastKey = "";
-        return { len: track.total, anchors: { top: 0, about: track.startOf("about"), plate: track.startOf("plate") + 0.1 * vh } };
+        return { len: track.total, anchors: { top: 0, about: track.startOf("about") } };
       },
       update: (f: Frame) => {
-        if (!track) return;
+        if (!track || !track2) return;
         const { y, L, vw, vh } = f;
-        const active = y >= graphFrom - vh * 0.6 && y < L.t1.start + L.t1.len * 0.4;
+        const active = y >= L.pl.start - vh * 0.6 && y < L.t1.start + L.t1.len * 0.4;
         if (active !== graphHandle.active) {
           graphHandle.active = active;
           graphHandle.engine?.setActive(active);
@@ -135,10 +150,24 @@ export default function Act1({ children }: { children: React.ReactNode }) {
           if (rimSvg) rimSvg.style.visibility = "hidden";
           return;
         }
+        // off-stage while Craft plays
+        if (y >= L.cr.start + 0.45 * vh && y < L.pl.start - 0.7 * vh) {
+          setClip("circle(0px at 50% 50%)");
+          return;
+        }
         let pose: Pose;
         let R = 0;
         const p = f.p1;
-        if (y < L.t1.start) pose = track.at(y, f.reduced);
+        if (y < L.pl.start - 0.7 * vh) {
+          pose = track.at(Math.min(y, a1Len), f.reduced);
+          // past the end of Act I keep the grazing rush going at the exit speed
+          if (y > a1Len && !f.reduced) {
+            const prev = track.at(a1Len - 8);
+            const k = (y - a1Len) / 8;
+            for (const key in pose) pose[key] += (pose[key] - prev[key]) * k;
+            pose.tilt = Math.min(80, pose.tilt);
+          }
+        } else if (y < L.t1.start) pose = track2.at(y - L.pl.start, f.reduced);
         else {
           const k = f.reduced ? 0 : smooth(sub(p, 0, 0.22));
           const zoom = f.reduced ? 1 : Math.pow(70, Math.pow(p, 1.9));
@@ -178,10 +207,13 @@ export default function Act1({ children }: { children: React.ReactNode }) {
         }
       },
     });
+    // the plate's own span (pl); Act I's update above drives both spans
+    const unPlate = registerPart("act1-plate", { owns: "pl", measure: () => ({ len: plate.len, anchors: plate.anchors }), update: () => {} });
     const ro = new ResizeObserver(() => requestLayout());
     sheet.querySelectorAll("[data-region]").forEach((el) => ro.observe(el));
     return () => {
       un();
+      unPlate();
       ro.disconnect();
     };
   }, []);

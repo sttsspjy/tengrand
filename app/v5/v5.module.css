@@ -1530,3 +1530,431 @@
     transform: none;
   }
 }
+
+/* ───────────── craft (three slides, fixed type layer) ───────────── */
+.craft {
+  position: relative;
+  height: 500vh;
+}
+.craftLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.slide {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  opacity: 0;
+}
+.slideA {
+  color: var(--ink);
+}
+.slideB {
+  color: #f4f1ea;
+}
+.slideC {
+  color: #0b0b0a;
+}
+.cwMask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: 0.04em 0.02em 0.02em;
+  margin: -0.04em -0.02em -0.02em;
+}
+.cw {
+  display: inline-block;
+  will-change: transform;
+}
+.slideHead {
+  position: absolute;
+  top: 76px;
+  left: 0;
+  right: 0;
+  align-items: baseline;
+}
+.slideHead,
+.aHint,
+.bSub,
+.cSub {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 560;
+  font-variation-settings: "wdth" 66;
+  letter-spacing: 0.12em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+.slideHeadNum {
+  grid-column: 1 / span 1;
+  border-top: 1px solid currentColor;
+  padding-top: 8px;
+}
+.slideHeadName {
+  grid-column: 2 / span 3;
+  border-top: 1px solid currentColor;
+  padding-top: 8px;
+}
+.slideHeadIdx {
+  grid-column: 7 / span 3;
+  border-top: 1px solid currentColor;
+  padding-top: 8px;
+}
+.slideHeadId {
+  grid-column: 10 / span 3;
+  border-top: 1px solid currentColor;
+  padding-top: 8px;
+  text-align: right;
+}
+.slideA .slideHeadNum,
+.slideA .slideHeadId {
+  color: var(--red);
+}
+.slideB .slideHeadNum,
+.slideB .slideHeadId {
+  color: var(--acid);
+}
+
+/* A · alive: condensed caps over the flip wall, the accent set wide in red */
+.aHead {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 118px;
+  font-size: clamp(56px, 8.6vw, 200px);
+  line-height: 0.8;
+  font-weight: 820;
+  font-variation-settings: "wdth" 62;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+.aLine {
+  grid-column: 1 / span 7;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.18em;
+  align-content: start;
+}
+.aAccentLine {
+  grid-column: 8 / span 5;
+  align-self: end;
+  justify-self: end;
+}
+.aAccent {
+  color: var(--red);
+  font-variation-settings: "wdth" 125;
+  font-weight: 880;
+  letter-spacing: -0.05em;
+}
+.aHintRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 64px;
+}
+.aHint {
+  grid-column: 1 / span 4;
+  overflow: hidden;
+  display: block;
+}
+.flipDot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 10px;
+  background: var(--red);
+  vertical-align: -1px;
+  animation: v5flip 1.8s var(--ease-io) infinite;
+}
+@keyframes v5flip {
+  0%,
+  40% {
+    transform: perspective(40px) rotateX(0deg);
+    background: var(--red);
+  }
+  70%,
+  100% {
+    transform: perspective(40px) rotateX(180deg);
+    background: var(--ink);
+  }
+}
+
+/* B · motion: centred inside the ring; scale follows the breath */
+.bHead {
+  position: absolute;
+  left: var(--g);
+  right: var(--g);
+  top: 50%;
+  translate: 0 -54%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  text-transform: uppercase;
+  will-change: transform;
+}
+.bLine {
+  display: flex;
+  gap: 0.32em;
+  font-size: clamp(18px, 2.2vw, 40px);
+  font-weight: 640;
+  font-variation-settings: "wdth" 125;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+.bAccentLine {
+  margin-top: 0.08em;
+  font-size: clamp(76px, 15.5vw, 300px);
+  line-height: 0.8;
+  font-weight: 840;
+  font-variation-settings: "wdth" 62;
+  letter-spacing: -0.045em;
+}
+.bAccent {
+  color: #fff;
+}
+.bSub {
+  position: absolute;
+  left: 50%;
+  bottom: 13vh;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  white-space: nowrap;
+  color: var(--acid);
+}
+.bHair {
+  display: block;
+  width: 22vw;
+  height: 1px;
+  background: var(--acid);
+  transform-origin: 100% 50%;
+}
+
+/* C · louder: words fly out of the horn, then the line lands enormous */
+.cFly {
+  position: absolute;
+  inset: 0;
+}
+.cFlyWord {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 17vw;
+  line-height: 0.8;
+  font-weight: 860;
+  font-variation-settings: "wdth" 62;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #f4f1ea;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.cFlyAccent {
+  color: var(--red);
+  -webkit-text-stroke: 0.012em #f4f1ea;
+}
+.cHead {
+  position: absolute;
+  left: var(--g);
+  right: var(--g);
+  bottom: 12vh;
+  display: flex;
+  flex-direction: column;
+  text-transform: uppercase;
+  font-weight: 840;
+  line-height: 0.8;
+  transform-origin: 0 100%;
+  will-change: transform;
+}
+.cLine {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.2em;
+  font-size: clamp(44px, 6.6vw, 150px);
+  font-variation-settings: "wdth" 62;
+  letter-spacing: -0.035em;
+}
+.cAccent {
+  color: #f4f1ea;
+}
+.cLoudWrap {
+  display: block;
+  line-height: 0;
+}
+.cLoud {
+  display: inline-block;
+  white-space: nowrap;
+  margin: 0.04em 0 0.02em;
+  font-size: 21.5vw;
+  line-height: 0.76;
+  font-weight: 900;
+  font-variation-settings: "wdth" 125;
+  letter-spacing: -0.06em;
+}
+.cSubRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6.5vh;
+}
+.cSub {
+  grid-column: 1 / span 6;
+}
+
+@media (max-width: 759px) {
+  .craft {
+    height: 440vh;
+  }
+  .slideHead {
+    top: 60px;
+  }
+  .slideHeadName {
+    grid-column: 2 / span 1;
+  }
+  .slideHeadIdx {
+    display: none;
+  }
+  .slideHeadId {
+    grid-column: 3 / span 2;
+  }
+  .aHead {
+    top: 100px;
+    font-size: 15.5vw;
+  }
+  .aLine,
+  .aAccentLine {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+  .aHintRow {
+    bottom: 92px;
+  }
+  .aHint {
+    grid-column: 1 / -1;
+  }
+  .bAccentLine {
+    font-size: 24vw;
+  }
+  .bLine {
+    font-size: 4.6vw;
+  }
+  .bSub {
+    bottom: 17vh;
+  }
+  .bHair {
+    width: 12vw;
+  }
+  .cFlyWord {
+    font-size: 30vw;
+  }
+  .cHead {
+    bottom: 16vh;
+  }
+  .cLine {
+    font-size: 11.5vw;
+  }
+  .cSubRow {
+    bottom: 11vh;
+  }
+  .cSub {
+    grid-column: 1 / -1;
+  }
+}
+
+/* chrome palettes while a craft slide is on screen */
+.page[data-act="a"] {
+  --bg: #f5f4f0;
+  --fg: var(--ink);
+  --dim: #5b5a55;
+  --rule: rgba(15, 15, 13, 0.22);
+  --rule-soft: rgba(15, 15, 13, 0.06);
+  --strong: var(--ink);
+  --accent: var(--red);
+  --focus: var(--red);
+}
+.page[data-act="b"] {
+  --bg: var(--black);
+  --fg: #ebe7de;
+  --dim: #8d877c;
+  --rule: rgba(235, 231, 222, 0.16);
+  --rule-soft: rgba(226, 255, 31, 0.08);
+  --strong: var(--acid);
+  --accent: var(--acid);
+  --focus: var(--acid);
+}
+.page[data-act="c"] {
+  --bg: var(--red);
+  --fg: #0b0b0a;
+  --dim: rgba(11, 11, 10, 0.62);
+  --rule: rgba(11, 11, 10, 0.3);
+  --rule-soft: rgba(11, 11, 10, 0.1);
+  --strong: #0b0b0a;
+  --accent: #0b0b0a;
+  --focus: #0b0b0a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .craft {
+    height: auto;
+  }
+  .craftLayer {
+    position: relative;
+  }
+  .slide {
+    position: relative;
+    height: 100svh;
+    min-height: 640px;
+    visibility: visible;
+    opacity: 1;
+  }
+  .slideA {
+    background: #f5f4f0;
+  }
+  .slideB {
+    background: var(--black);
+  }
+  .slideC {
+    background: var(--red);
+  }
+  .cFly {
+    display: none;
+  }
+  .flipDot {
+    animation: none;
+  }
+}
+
+/* ───────────── arrival: The Cut (gate → Monolith) ───────────── */
+.cover {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  pointer-events: none;
+}
+:global(html[data-entry="monolith"]) .cover {
+  display: block;
+}
+.blade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--red);
+  backface-visibility: visible;
+  will-change: transform;
+}
+.cover {
+  background: var(--red);
+}
+.page[data-arrive] .stage {
+  transition: none;
+}
+.page[data-cut] .gridLines span {
+  border-color: var(--red);
+  transition: none;
+}
